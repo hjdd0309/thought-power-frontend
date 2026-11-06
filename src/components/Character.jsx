@@ -1,7 +1,9 @@
-import note from "@/assets/characters/note.png";
-import sit from "@/assets/characters/sit.png";
-import smile from "@/assets/characters/smile.png";
-import wave from "@/assets/characters/wave.png";
+// 화면 최대 표시 너비의 2배로 리사이즈한 WebP (투명 배경 유지, quality 82)
+// wave 520px(A08 260px), 나머지 460px(230px)
+import note from "@/assets/characters/note.webp";
+import sit from "@/assets/characters/sit.webp";
+import smile from "@/assets/characters/smile.webp";
+import wave from "@/assets/characters/wave.webp";
 
 const CHARACTERS = { note, sit, smile, wave };
 
