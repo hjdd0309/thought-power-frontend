@@ -5,6 +5,7 @@ import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import Character from "@/components/Character";
 import { useOnboarding } from "@/contexts/onboarding";
+import { markOnboarded } from "@/utils/storage";
 
 // A08 시작 준비 완료 — 온보딩 값 일괄 저장 후 홈 이동
 function DonePage() {
@@ -16,6 +17,7 @@ function DonePage() {
     setSaving(true);
     try {
       await completeOnboarding({ agreements, guardianType, name, age });
+      markOnboarded();
       navigate("/home", { replace: true });
     } finally {
       setSaving(false);

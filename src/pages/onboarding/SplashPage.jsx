@@ -1,16 +1,16 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { isOnboarded } from "@/utils/storage";
 
 const SPLASH_DURATION = 1500;
 
-// A01 스플래시 — 서비스 로고 표시 후 /start 이동
+// A01 스플래시 — 서비스 로고 표시 후 온보딩 완료 사용자는 /home, 아니면 /start
 function SplashPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // TODO: 백엔드 연결 시 온보딩 완료 사용자는 /home으로 이동
     const timer = setTimeout(
-      () => navigate("/start", { replace: true }),
+      () => navigate(isOnboarded() ? "/home" : "/start", { replace: true }),
       SPLASH_DURATION,
     );
     return () => clearTimeout(timer);
