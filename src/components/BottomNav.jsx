@@ -8,12 +8,7 @@ import plusIcon from "@/assets/icons/plus.svg";
 const ITEMS = [
   { to: "/diary/emotion", label: "일기 쓰기", icon: plusIcon },
   { to: "/home", label: "홈", icon: homeIcon },
-  {
-    to: "/archive",
-    label: "보관함",
-    icon: archiveIcon,
-    match: ["/archive", "/report"],
-  },
+  { to: "/archive", label: "보관함", icon: archiveIcon },
 ];
 
 function BottomNav() {
@@ -24,9 +19,7 @@ function BottomNav() {
   return (
     <nav className="sticky bottom-0 z-30 box-content flex h-24 shrink-0 items-center justify-center gap-7 bg-white pb-7.5">
       {ITEMS.map((item) => {
-        const matched = (item.match ?? [item.to]).some((p) =>
-          pathname.startsWith(p),
-        );
+        const matched = pathname.startsWith(item.to);
         const isActive = pressed ? pressed === item.to : matched;
         return (
           <NavLink

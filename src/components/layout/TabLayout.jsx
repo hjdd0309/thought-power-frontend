@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 
-// 하단 메뉴가 보이는 화면(홈·보관함·리포트)
+// 하단 메뉴가 보이는 화면(홈·보관함)
 function TabLayout() {
   return (
     <>

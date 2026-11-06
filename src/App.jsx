@@ -42,15 +42,15 @@ function App() {
             <Route path="/onboarding/age" element={<AgePage />} />
             <Route path="/onboarding/done" element={<DonePage />} />
 
-            {/* 하단 메뉴가 보이는 화면: 홈·보관함·리포트 */}
+            {/* 하단 메뉴가 보이는 화면: 홈·보관함 */}
             <Route element={<TabLayout />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/archive" element={<ArchivePage />} />
-              <Route path="/report" element={<ReportPage />} />
             </Route>
 
-            {/* E 일기 상세 (Figma E02: 하단 메뉴 없음, 뒤로가기) */}
+            {/* E 일기 상세·리포트 (Figma E02/E04/E05: 하단 메뉴 없음, 뒤로가기) */}
             <Route path="/archive/:diaryId" element={<DiaryDetailPage />} />
+            <Route path="/report" element={<ReportPage />} />
 
             {/* F 설정 (하단 메뉴 없음) — F02 계정 정보·F05 로그아웃 제외 */}
             <Route path="/settings" element={<SettingsPage />} />
