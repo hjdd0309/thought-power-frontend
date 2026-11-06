@@ -1,5 +1,6 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import { saveDiary } from "@/api/diary";
+import { isDiaryAlreadyExists } from "@/api/mock";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import DiarySummary from "@/components/DiarySummary";
@@ -8,6 +9,7 @@ import TopBar from "@/components/TopBar";
 import { QUESTION_COUNT } from "@/constants/diary";
 import { useDiary } from "@/contexts/diary";
 import useSubmit from "@/hooks/useSubmit";
+import AlreadyWritten from "@/pages/diary/AlreadyWritten";
 import { toISODate } from "@/utils/date";
 
 // C13 / D06 전체 기록 확인 — 감정·날짜·본문·질문 3개와 답변, 완료하기
@@ -31,6 +33,11 @@ function ReviewPage() {
     });
     navigate("/diary/complete", { replace: true });
   });
+
+  // 그사이 오늘 일기가 저장된 경우(하루 1개) — 다시 시도 대신 이미 썼다는 안내
+  if (isDiaryAlreadyExists(submit.error)) {
+    return <AlreadyWritten onLeave={diary.reset} />;
+  }
 
   const answered = diary.answers.filter((a) => a.answer);
   if (answered.length < QUESTION_COUNT) {

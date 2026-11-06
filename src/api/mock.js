@@ -13,6 +13,21 @@ export class ApiError extends Error {
   }
 }
 
+// 하루 1개 제약(DB UNIQUE(child_id, diary_date)) 위반 — 서버 409 응답 code
+export const DIARY_ALREADY_EXISTS = "DIARY_ALREADY_EXISTS";
+
+/** 오늘 일기를 이미 썼다는 에러인지 (mock ApiError · 실서버 axios 409 응답 모두) */
+export const isDiaryAlreadyExists = (error) =>
+  error?.code === DIARY_ALREADY_EXISTS ||
+  error?.response?.data?.code === DIARY_ALREADY_EXISTS;
+
+/** mock 실패 응답 — 실제 API 에러처럼 비동기로 reject */
+export function mockError(code, message, delay = MOCK_DELAY_MS) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new ApiError(code, message)), delay);
+  });
+}
+
 export function mockResponse(data, delay = MOCK_DELAY_MS) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {

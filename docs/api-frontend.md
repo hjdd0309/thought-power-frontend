@@ -31,12 +31,12 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 }
 ```
 
-| 상태           | code 예시                                                   | 프론트 처리                           |
-| -------------- | ----------------------------------------------------------- | ------------------------------------- |
-| 400            | `INVALID_REQUEST`, `INVALID_DATE_RANGE`, `CONTENT_TOO_LONG` | 입력 화면 유지 + 안내                 |
-| 404            | `DIARY_NOT_FOUND`, `PROFILE_NOT_FOUND`                      | 빈 상태 화면(예: E02 빈 날짜 안내)    |
-| 409            | `DIARY_ALREADY_EXISTS` (하루 1개 제약)                      | 안내 후 보관함으로 이동 — 확인 필요 2 |
-| 500 / 네트워크 | `INTERNAL_ERROR`                                            | 공통 에러 안내 + 다시 시도            |
+| 상태           | code 예시                                                   | 프론트 처리                                        |
+| -------------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| 400            | `INVALID_REQUEST`, `INVALID_DATE_RANGE`, `CONTENT_TOO_LONG` | 입력 화면 유지 + 안내                              |
+| 404            | `DIARY_NOT_FOUND`, `PROFILE_NOT_FOUND`                      | 빈 상태 화면(예: E02 빈 날짜 안내)                 |
+| 409            | `DIARY_ALREADY_EXISTS` (하루 1개 제약)                      | "오늘은 이미 일기를 썼어요" 안내 + 보관함에서 보기 |
+| 500 / 네트워크 | `INTERNAL_ERROR`                                            | 공통 에러 안내 + 다시 시도                         |
 
 질문 요청 응답은 `{ order, type, content }` 이다. AI 실패 시 서버가 기본 질문으로 200 응답해도 되고, 요청 자체가 실패하면 프론트가 같은 기본 질문으로 대체한다.
 
@@ -129,7 +129,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 - `date`: 작성한 날(오늘, Asia/Seoul 기준) `YYYY-MM-DD`
 - `questions`: 화면에 보여준 질문(`content`)과 사용자가 수정·확인한 답변(`answer`) 3쌍
 - 음성 인식 결과 수정은 클라이언트에서만 하고, 최종 텍스트를 저장 (스키마 주석과 일치)
-- 하루 1개 제약(`UNIQUE(child_id, diary_date)`) → 같은 날 두 번째 저장 시 409 `DIARY_ALREADY_EXISTS` → 확인 필요 2
+- 하루 1개 제약(`UNIQUE(child_id, diary_date)`) → 같은 날 두 번째 저장 시 409 `DIARY_ALREADY_EXISTS` → 프론트는 "오늘은 이미 일기를 썼어요" 안내 + 보관함에서 보기 (5. 확정 참고)
 
 ---
 
@@ -274,16 +274,17 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 
 ## 5. 확정
 
-| 항목                                    | 확정 내용                                                                                                                                                                       | 반영                                                                                                              |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 나이 범위 (구 확인 필요 3)              | **6~10세** (DB `ck_children_2`와 동일)                                                                                                                                          | `src/constants/onboarding.js` `AGE_MIN=6`·`AGE_MAX=10` → A07 슬라이더, F03 나이 선택 / `docs/spec.md` ON-07·ST-03 |
-| 보호자 유형                             | 학교 선생님 `SCHOOL_TEACHER` · **아동시설 선생님 `FACILITY_TEACHER`** · 부모님 `PARENT` · 기타 `OTHER`                                                                          | `docs/spec.md` ON-05·ST-03 ("학원 선생님" 표기 수정)                                                              |
-| E04 차트 모양                           | **막대 차트** (Figma 기준, 도넛 아님)                                                                                                                                           | `docs/spec.md` RP-04                                                                                              |
-| E05 카드 제목 (`trend_title`)           | **프론트 고정 문구** "다양한 마음을 기록했어요". API 응답에 `trendTitle` 없음. **백엔드 컬럼 제거 또는 null 허용 요청함** (DB `trend_title`은 현재 `NOT NULL` + 빈 문자열 금지) | `src/pages/report/ReportPage.jsx` `TREND_CARD_TITLE`                                                              |
-| 약관 동의 (구 확인 필요 5)              | **화면 표시용, 저장 안 함**. 온보딩 완료 요청에 `agreements`를 보내지 않음 (DB `children`에도 동의 컬럼 없음)                                                                   | `src/api/onboarding.js`, `src/pages/onboarding/DonePage.jsx`                                                      |
-| 부끄러움 감정 코드 (구 확인 필요 1)     | **`SHAME`** (DB 시드와 동일)                                                                                                                                                    | `src/constants/emotions.js`, `src/mocks/*` / `docs/spec.md` 감정 코드 표·AI 연동 예시                             |
-| 일기 저장 방식 (구 확인 필요 2)         | 작성 데이터는 `DiaryContext`가 들고 있다가 **완료 시 한 번에 저장** (`POST /api/diaries`). 단계별 저장 없음. AI 질문 요청은 저장 없이 질문만 받음                               | `src/api/diary.js` `getQuestion`·`saveDiary`, `src/pages/diary/*`                                                 |
-| 작성 방식 VOICE → TEXT (구 확인 필요 8) | 별도 요청 없이 완료 저장 때 최종 `inputType`만 보냄                                                                                                                             | `src/pages/diary/WritePage.jsx`, `QuestionPage.jsx`                                                               |
+| 항목                                    | 확정 내용                                                                                                                                                                                                                           | 반영                                                                                                              |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 나이 범위 (구 확인 필요 3)              | **6~10세** (DB `ck_children_2`와 동일)                                                                                                                                                                                              | `src/constants/onboarding.js` `AGE_MIN=6`·`AGE_MAX=10` → A07 슬라이더, F03 나이 선택 / `docs/spec.md` ON-07·ST-03 |
+| 보호자 유형                             | 학교 선생님 `SCHOOL_TEACHER` · **아동시설 선생님 `FACILITY_TEACHER`** · 부모님 `PARENT` · 기타 `OTHER`                                                                                                                              | `docs/spec.md` ON-05·ST-03 ("학원 선생님" 표기 수정)                                                              |
+| E04 차트 모양                           | **막대 차트** (Figma 기준, 도넛 아님)                                                                                                                                                                                               | `docs/spec.md` RP-04                                                                                              |
+| E05 카드 제목 (`trend_title`)           | **프론트 고정 문구** "다양한 마음을 기록했어요". API 응답에 `trendTitle` 없음. **백엔드 컬럼 제거 또는 null 허용 요청함** (DB `trend_title`은 현재 `NOT NULL` + 빈 문자열 금지)                                                     | `src/pages/report/ReportPage.jsx` `TREND_CARD_TITLE`                                                              |
+| 약관 동의 (구 확인 필요 5)              | **화면 표시용, 저장 안 함**. 온보딩 완료 요청에 `agreements`를 보내지 않음 (DB `children`에도 동의 컬럼 없음)                                                                                                                       | `src/api/onboarding.js`, `src/pages/onboarding/DonePage.jsx`                                                      |
+| 부끄러움 감정 코드 (구 확인 필요 1)     | **`SHAME`** (DB 시드와 동일)                                                                                                                                                                                                        | `src/constants/emotions.js`, `src/mocks/*` / `docs/spec.md` 감정 코드 표·AI 연동 예시                             |
+| 일기 저장 방식 (구 확인 필요 2)         | 작성 데이터는 `DiaryContext`가 들고 있다가 **완료 시 한 번에 저장** (`POST /api/diaries`). 단계별 저장 없음. AI 질문 요청은 저장 없이 질문만 받음                                                                                   | `src/api/diary.js` `getQuestion`·`saveDiary`, `src/pages/diary/*`                                                 |
+| 작성 방식 VOICE → TEXT (구 확인 필요 8) | 별도 요청 없이 완료 저장 때 최종 `inputType`만 보냄                                                                                                                                                                                 | `src/pages/diary/WritePage.jsx`, `QuestionPage.jsx`                                                               |
+| 하루 1개 일기 (구 확인 필요 2)          | 오늘 일기가 있으면 홈 일기 쓰기·하단 + 버튼 진입 시 감정 선택 대신 "오늘은 이미 일기를 썼어요" 안내 + 보관함에서 보기. 오늘 일기 여부는 `GET /api/diaries?year&month` 결과로 확인. 완료 저장 409 `DIARY_ALREADY_EXISTS`도 같은 안내 | `src/pages/diary/EmotionPage.jsx`, `AlreadyWritten.jsx`, `ReviewPage.jsx`                                         |
 
 ## 6. 확인 필요
 
@@ -292,7 +293,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 | #   | 항목                            | 프론트 현재                             | 백엔드/명세                                                           | 제안                                                                                                   |
 | --- | ------------------------------- | --------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 1   | ~~부끄러움 감정 코드~~          | —                                       | —                                                                     | **확정 (5. 확정 참고)** — `SHAME`으로 통일                                                             |
-| 2   | 하루 1개 (저장 구조는 확정)     | 하루 여러 개                            | DB `UNIQUE(child_id, diary_date)`                                     | 저장 구조는 **확정 (5. 확정 참고)**. 하루 1개면 홈에서 "오늘 이미 작성" 처리 필요                      |
+| 2   | ~~일기 저장 구조 / 하루 1개~~   | —                                       | —                                                                     | **확정 (5. 확정 참고)**                                                                                |
 | 3   | ~~나이 범위~~                   | —                                       | —                                                                     | **확정 (5. 확정 참고)**. 남은 것: 응답에 `ageRecordedAt` 포함 여부                                     |
 | 4   | 리포트 문구 필드                | `description`·`advice`·`interpretation` | DB `most/least_emotion_reason`·`parent_advice`·`trend_interpretation` | 응답 필드명 매핑 확정. E04 최다/최소 감정 설명을 AI 문구로 쓸지. (`trend_title`은 확정 — 5. 확정 참고) |
 | 5   | ~~약관 동의 저장~~              | —                                       | —                                                                     | **확정 (5. 확정 참고)** — 화면 표시용, 저장 안 함                                                      |

@@ -15,6 +15,16 @@ export async function getMonthlyDiaries(year, month) {
   return mockResponse(list);
 }
 
+/** 오늘 쓴 일기 { diaryId, date, emotion } 또는 null — 월별 목록에서 찾는다 (하루 1개 제한 확인용) */
+export async function getTodayDiary() {
+  const today = new Date();
+  const list = await getMonthlyDiaries(
+    today.getFullYear(),
+    today.getMonth() + 1,
+  );
+  return list.find((d) => d.date === toISODate(today)) ?? null;
+}
+
 /** 일기 상세 */
 export async function getDiary(diaryId) {
   const diary = mockDiaries.find((d) => d.diaryId === Number(diaryId));
