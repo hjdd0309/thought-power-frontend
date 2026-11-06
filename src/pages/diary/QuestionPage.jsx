@@ -15,6 +15,7 @@ import { useDiary } from "@/contexts/diary";
 import useVoiceRecorder from "@/hooks/useVoiceRecorder";
 import { MOCK_TRANSCRIPTS } from "@/mocks/questions";
 import TranscriptConfirm from "@/pages/diary/TranscriptConfirm";
+import VoiceActions from "@/pages/diary/VoiceActions";
 
 // 질문 카드 상단: 질문 유형 + 질문 문구
 function QuestionHeading({ label, content, top = "pt-7.75" }) {
@@ -29,15 +30,28 @@ function QuestionHeading({ label, content, top = "pt-7.75" }) {
 }
 
 // 말로 답하기: 녹음 전(C04/C07/C10) → 녹음 중(C05/C08/C11) → 수정·확인(C06/C09/C12)
-function VoiceAnswer({ order, step, question, initial, onSubmit, saving }) {
+function VoiceAnswer({
+  order,
+  step,
+  question,
+  initial,
+  onSubmit,
+  saving,
+  onSwitchToText,
+}) {
   const recorder = useVoiceRecorder({
     mockTranscript: MOCK_TRANSCRIPTS[order],
   });
   const [draft, setDraft] = useState(initial ?? null);
 
+  // 정지 시 최종 인식 텍스트를 수정·확인(C06/C09/C12)으로 넘긴다. 비어 있으면 안내만 표시
   const toggle = async () => {
-    if (recorder.isRecording) setDraft(await recorder.stop());
-    else recorder.start();
+    if (recorder.isRecording) {
+      const text = await recorder.stop();
+      if (text) setDraft(text);
+    } else {
+      recorder.start();
+    }
   };
 
   if (draft !== null) {
@@ -66,22 +80,19 @@ function VoiceAnswer({ order, step, question, initial, onSubmit, saving }) {
         <ProgressBar current={order} total={QUESTION_COUNT} />
       </TopBar>
       <main className="px-5 pt-10.5">
-        <section className="h-142 rounded-dialog border border-border-neutral bg-white">
+        <section className="min-h-142 rounded-dialog border border-border-neutral bg-white pb-6">
           <QuestionHeading label={step.label} content={question?.content} />
           <div className="mt-26.5">
-            <VoiceRecorder
-              isRecording={recorder.isRecording}
-              seconds={recorder.seconds}
-              onToggle={toggle}
-            />
+            <VoiceRecorder recorder={recorder} onToggle={toggle} />
           </div>
         </section>
       </main>
-      <BottomAction>
-        <Button disabled={!question} onClick={toggle}>
-          {recorder.isRecording ? "녹음 완료" : "녹음 시작"}
-        </Button>
-      </BottomAction>
+      <VoiceActions
+        recorder={recorder}
+        onToggle={toggle}
+        onSwitchToText={onSwitchToText}
+        disabled={!question}
+      />
     </>
   );
 }
@@ -133,7 +144,7 @@ function TextAnswer({ order, step, question, initial, onSubmit, saving }) {
 // /diary/question/:order — 질문 1~3 (진행률 n/3)
 function QuestionPage({ order }) {
   const navigate = useNavigate();
-  const { diaryId, inputType, content, getQnA, setQnA } = useDiary();
+  const { diaryId, inputType, content, getQnA, setQnA, update } = useDiary();
   const step = getQuestionStep(order);
   const qna = getQnA(order);
   const [saving, setSaving] = useState(false);
@@ -182,7 +193,11 @@ function QuestionPage({ order }) {
   return inputType === INPUT_TYPES.TEXT ? (
     <TextAnswer {...props} />
   ) : (
-    <VoiceAnswer {...props} />
+    <VoiceAnswer
+      {...props}
+      // TODO: 백엔드 연결 시 초안의 작성 방식(inputType)도 TEXT로 변경 요청
+      onSwitchToText={() => update({ inputType: INPUT_TYPES.TEXT })}
+    />
   );
 }
 
