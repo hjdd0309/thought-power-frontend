@@ -1,10 +1,16 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import MobileLayout from "@/components/layout/MobileLayout";
 import TabLayout from "@/components/layout/TabLayout";
 import DiaryProvider from "@/contexts/DiaryProvider";
 import ArchivePage from "@/pages/archive/ArchivePage";
 import DiaryDetailPage from "@/pages/archive/DiaryDetailPage";
 import ReportPage from "@/pages/report/ReportPage";
+import ProfilePage from "@/pages/settings/ProfilePage";
+import SettingsPage from "@/pages/settings/SettingsPage";
+import SubscriptionPage from "@/pages/settings/SubscriptionPage";
+import SupportPage from "@/pages/settings/SupportPage";
+import TermsPage from "@/pages/settings/TermsPage";
+import VersionPage from "@/pages/settings/VersionPage";
 import OnboardingProvider from "@/contexts/OnboardingProvider";
 import EmotionPage from "@/pages/diary/EmotionPage";
 import CompletePage from "@/pages/diary/CompletePage";
@@ -45,6 +51,19 @@ function App() {
 
             {/* E 일기 상세 (Figma E02: 하단 메뉴 없음, 뒤로가기) */}
             <Route path="/archive/:diaryId" element={<DiaryDetailPage />} />
+
+            {/* F 설정 (하단 메뉴 없음) — F02 계정 정보·F05 로그아웃 제외 */}
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/profile" element={<ProfilePage />} />
+            <Route
+              path="/settings/subscription"
+              element={<SubscriptionPage />}
+            />
+            <Route path="/settings/terms" element={<TermsPage />} />
+            <Route path="/settings/support" element={<SupportPage />} />
+            <Route path="/settings/version" element={<VersionPage />} />
+
+            <Route path="*" element={<Navigate to="/" replace />} />
 
             {/* B 일기 작성 진입 (하단 메뉴 없음) */}
             <Route path="/diary/emotion" element={<EmotionPage />} />

@@ -48,7 +48,7 @@ function DiaryDetailPage() {
               type="button"
               aria-label="일기 삭제"
               onClick={() => setConfirmOpen(true)}
-              className="-mr-3 flex size-10 items-center justify-center"
+              className="mr-1 flex size-10 items-center justify-center"
             >
               <img src={trashIcon} alt="" width={32} height={32} />
             </button>
