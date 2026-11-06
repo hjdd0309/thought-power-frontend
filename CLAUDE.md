@@ -62,7 +62,7 @@ src/
 - 예) feat: 메인 페이지 카드 컴포넌트 추가
 
 ## 도메인 상수
-- 감정 코드: JOY(기쁨), SADNESS(슬픔), ANGER(화남), FEAR(무서움), SURPRISE(놀람), SHYNESS(부끄러움)
+- 감정 코드: JOY(기쁨), SADNESS(슬픔), ANGER(화남), FEAR(무서움), SURPRISE(놀람), SHAME(부끄러움)
 - 질문 순서: 1=EMOTION(감정 탐색), 2=REASON(이유 탐색), 3=PERSPECTIVE(관점 확장)
 - 로그인 없음: 서버가 기본 사용자로 고정하므로 인증 헤더 불필요
 

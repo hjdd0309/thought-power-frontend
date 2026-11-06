@@ -7,18 +7,18 @@
 
 ## 0. 공통 규칙
 
-| 항목         | 규칙                                                                                                                                  |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Base URL     | `VITE_API_BASE_URL` (배포 환경은 **https** 필수)                                                                                      |
-| 인증         | 없음. 서버가 기본 사용자(`child_id = 1`)로 고정                                                                                       |
-| Content-Type | `application/json; charset=utf-8`                                                                                                     |
-| 날짜         | `YYYY-MM-DD` 문자열 (예: `"2026-11-06"`). 일기 날짜(`diary_date`)는 서버가 **Asia/Seoul** 기준으로 정한다                             |
-| 일시         | ISO 8601 UTC (예: `"2026-11-06T05:12:00Z"`) — 프론트는 현재 일시 필드를 쓰지 않음                                                     |
-| 감정 코드    | `JOY`(기쁨) · `SADNESS`(슬픔) · `ANGER`(화남) · `FEAR`(무서움) · `SURPRISE`(놀람) · `SHYNESS`(부끄러움) ⚠️ DB는 `SHAME` — 확인 필요 1 |
-| 질문 타입    | `order` 1=`EMOTION`(감정 탐색), 2=`REASON`(이유 탐색), 3=`PERSPECTIVE`(관점 확장) — DB `QuestionStage`, `sequence`와 동일             |
-| 작성 방식    | `VOICE` · `TEXT` (DB `InputType`). TEXT 본문은 500자 이하                                                                             |
-| 보호자 유형  | `PARENT` · `SCHOOL_TEACHER` · `FACILITY_TEACHER` · `OTHER` (DB `GuardianType`)                                                        |
-| 필드 표기    | JSON은 camelCase                                                                                                                      |
+| 항목         | 규칙                                                                                                                          |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Base URL     | `VITE_API_BASE_URL` (배포 환경은 **https** 필수)                                                                              |
+| 인증         | 없음. 서버가 기본 사용자(`child_id = 1`)로 고정                                                                               |
+| Content-Type | `application/json; charset=utf-8`                                                                                             |
+| 날짜         | `YYYY-MM-DD` 문자열 (예: `"2026-11-06"`). 일기 날짜(`diary_date`)는 서버가 **Asia/Seoul** 기준으로 정한다                     |
+| 일시         | ISO 8601 UTC (예: `"2026-11-06T05:12:00Z"`) — 프론트는 현재 일시 필드를 쓰지 않음                                             |
+| 감정 코드    | `JOY`(기쁨) · `SADNESS`(슬픔) · `ANGER`(화남) · `FEAR`(무서움) · `SURPRISE`(놀람) · `SHAME`(부끄러움) — 확정 (DB 시드와 동일) |
+| 질문 타입    | `order` 1=`EMOTION`(감정 탐색), 2=`REASON`(이유 탐색), 3=`PERSPECTIVE`(관점 확장) — DB `QuestionStage`, `sequence`와 동일     |
+| 작성 방식    | `VOICE` · `TEXT` (DB `InputType`). TEXT 본문은 500자 이하                                                                     |
+| 보호자 유형  | `PARENT` · `SCHOOL_TEACHER` · `FACILITY_TEACHER` · `OTHER` (DB `GuardianType`)                                                |
+| 필드 표기    | JSON은 camelCase                                                                                                              |
 
 ### 에러 응답 (제안)
 
@@ -225,7 +225,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
     { "emotion": "ANGER", "count": 0, "ratio": 0 },
     { "emotion": "FEAR", "count": 0, "ratio": 0 },
     { "emotion": "SURPRISE", "count": 0, "ratio": 0 },
-    { "emotion": "SHYNESS", "count": 0, "ratio": 0 }
+    { "emotion": "SHAME", "count": 0, "ratio": 0 }
   ],
   "days": [
     { "date": "2026-11-01", "emotions": ["JOY"] },
@@ -304,13 +304,14 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 
 ## 5. 확정
 
-| 항목                          | 확정 내용                                                                                                                                                                       | 반영                                                                                                              |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 나이 범위 (구 확인 필요 3)    | **6~10세** (DB `ck_children_2`와 동일)                                                                                                                                          | `src/constants/onboarding.js` `AGE_MIN=6`·`AGE_MAX=10` → A07 슬라이더, F03 나이 선택 / `docs/spec.md` ON-07·ST-03 |
-| 보호자 유형                   | 학교 선생님 `SCHOOL_TEACHER` · **아동시설 선생님 `FACILITY_TEACHER`** · 부모님 `PARENT` · 기타 `OTHER`                                                                          | `docs/spec.md` ON-05·ST-03 ("학원 선생님" 표기 수정)                                                              |
-| E04 차트 모양                 | **막대 차트** (Figma 기준, 도넛 아님)                                                                                                                                           | `docs/spec.md` RP-04                                                                                              |
-| E05 카드 제목 (`trend_title`) | **프론트 고정 문구** "다양한 마음을 기록했어요". API 응답에 `trendTitle` 없음. **백엔드 컬럼 제거 또는 null 허용 요청함** (DB `trend_title`은 현재 `NOT NULL` + 빈 문자열 금지) | `src/pages/report/ReportPage.jsx` `TREND_CARD_TITLE`                                                              |
-| 약관 동의 (구 확인 필요 5)    | **화면 표시용, 저장 안 함**. 온보딩 완료 요청에 `agreements`를 보내지 않음 (DB `children`에도 동의 컬럼 없음)                                                                   | `src/api/onboarding.js`, `src/pages/onboarding/DonePage.jsx`                                                      |
+| 항목                                | 확정 내용                                                                                                                                                                       | 반영                                                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 나이 범위 (구 확인 필요 3)          | **6~10세** (DB `ck_children_2`와 동일)                                                                                                                                          | `src/constants/onboarding.js` `AGE_MIN=6`·`AGE_MAX=10` → A07 슬라이더, F03 나이 선택 / `docs/spec.md` ON-07·ST-03 |
+| 보호자 유형                         | 학교 선생님 `SCHOOL_TEACHER` · **아동시설 선생님 `FACILITY_TEACHER`** · 부모님 `PARENT` · 기타 `OTHER`                                                                          | `docs/spec.md` ON-05·ST-03 ("학원 선생님" 표기 수정)                                                              |
+| E04 차트 모양                       | **막대 차트** (Figma 기준, 도넛 아님)                                                                                                                                           | `docs/spec.md` RP-04                                                                                              |
+| E05 카드 제목 (`trend_title`)       | **프론트 고정 문구** "다양한 마음을 기록했어요". API 응답에 `trendTitle` 없음. **백엔드 컬럼 제거 또는 null 허용 요청함** (DB `trend_title`은 현재 `NOT NULL` + 빈 문자열 금지) | `src/pages/report/ReportPage.jsx` `TREND_CARD_TITLE`                                                              |
+| 약관 동의 (구 확인 필요 5)          | **화면 표시용, 저장 안 함**. 온보딩 완료 요청에 `agreements`를 보내지 않음 (DB `children`에도 동의 컬럼 없음)                                                                   | `src/api/onboarding.js`, `src/pages/onboarding/DonePage.jsx`                                                      |
+| 부끄러움 감정 코드 (구 확인 필요 1) | **`SHAME`** (DB 시드와 동일)                                                                                                                                                    | `src/constants/emotions.js`, `src/mocks/*` / `docs/spec.md` 감정 코드 표·AI 연동 예시                             |
 
 ## 6. 확인 필요
 
@@ -318,7 +319,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 
 | #   | 항목                        | 프론트 현재                             | 백엔드/명세                                                                                    | 제안                                                                                                   |
 | --- | --------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 1   | 부끄러움 감정 코드          | `SHYNESS`                               | DB 시드 `SHAME`, spec `SHYNESS`                                                                | 한쪽으로 통일 (spec 기준이면 DB 시드 수정)                                                             |
+| 1   | ~~부끄러움 감정 코드~~      | —                                       | —                                                                                              | **확정 (5. 확정 참고)** — `SHAME`으로 통일                                                             |
 | 2   | 일기 저장 구조 / 하루 1개   | 단계별 함수 + 하루 여러 개              | DB: 1회 트랜잭션 저장, `UNIQUE(child_id, diary_date)` / spec: 초안·단계별 저장, days에 여러 개 | A안(최종 1회 저장) 추천. 하루 1개면 홈에서 "오늘 이미 작성" 처리 필요                                  |
 | 3   | ~~나이 범위~~               | —                                       | —                                                                                              | **확정 (5. 확정 참고)**. 남은 것: 응답에 `ageRecordedAt` 포함 여부                                     |
 | 4   | 리포트 문구 필드            | `description`·`advice`·`interpretation` | DB `most/least_emotion_reason`·`parent_advice`·`trend_interpretation`                          | 응답 필드명 매핑 확정. E04 최다/최소 감정 설명을 AI 문구로 쓸지. (`trend_title`은 확정 — 5. 확정 참고) |

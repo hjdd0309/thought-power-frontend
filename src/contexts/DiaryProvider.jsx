@@ -3,7 +3,7 @@ import { DiaryContext } from "@/contexts/diary";
 
 const INITIAL = {
   diaryId: null,
-  emotion: null, // JOY | SADNESS | ANGER | FEAR | SURPRISE | SHYNESS
+  emotion: null, // JOY | SADNESS | ANGER | FEAR | SURPRISE | SHAME
   inputType: null, // VOICE | TEXT
   content: "",
   // 질문·답변 3쌍: { order, type, content(질문), answer }

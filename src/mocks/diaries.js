@@ -98,7 +98,7 @@ const DEMO = [
     ],
   },
   {
-    emotion: "SHYNESS",
+    emotion: "SHAME",
     inputType: "TEXT",
     content:
       "수업 시간에 앞에 나가서 발표를 했어요.\n얼굴이 빨개져서 목소리가 작아졌어요.",
@@ -209,7 +209,7 @@ const DEMO = [
     ],
   },
   {
-    emotion: "SHYNESS",
+    emotion: "SHAME",
     inputType: "TEXT",
     content:
       "새로 전학 온 친구한테 먼저 말을 걸었어요.\n말하고 나니까 얼굴이 뜨거워졌어요.",

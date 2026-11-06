@@ -76,7 +76,7 @@
 | 화남 | `ANGER` |
 | 무서움 | `FEAR` |
 | 놀람 | `SURPRISE` |
-| 부끄러움 | `SHYNESS` |
+| 부끄러움 | `SHAME` |
 
 **역할 분담** 
 
@@ -169,7 +169,7 @@
 - 첫 번째 질문 요청: `previousAnswers: []`
 - 두 번째 질문 요청: 첫 번째 질문·답변 포함
 - 세 번째 질문 요청: 첫 번째와 두 번째 질문·답변 포함
-- 감정 코드: `JOY`, `SADNESS`, `ANGER`, `FEAR`, `SURPRISE`, `SHYNESS`
+- 감정 코드: `JOY`, `SADNESS`, `ANGER`, `FEAR`, `SURPRISE`, `SHAME`
 
 ### AI → BE1 응답
 
@@ -222,7 +222,7 @@
     { "emotion": "ANGER", "count": 0, "ratio": 0 },
     { "emotion": "FEAR", "count": 0, "ratio": 0 },
     { "emotion": "SURPRISE", "count": 0, "ratio": 0 },
-    { "emotion": "SHYNESS", "count": 0, "ratio": 0 }
+    { "emotion": "SHAME", "count": 0, "ratio": 0 }
   ],
   "days": [
     { "date": "2026-11-01", "emotions": ["JOY"] },
