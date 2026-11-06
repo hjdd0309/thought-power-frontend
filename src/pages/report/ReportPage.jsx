@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getEmotionReport } from "@/api/archive";
 import { USE_MOCK } from "@/api/mock";
+import ErrorRetry from "@/components/ErrorRetry";
+import LoadingState from "@/components/LoadingState";
 import TopBar from "@/components/TopBar";
+import useRequest from "@/hooks/useRequest";
 import { EMOTIONS, getEmotion } from "@/constants/emotions";
 import { formatDotDate, toISODate } from "@/utils/date";
 import EmotionBarChart from "@/pages/report/EmotionBarChart";
@@ -85,17 +88,12 @@ function ReportPage() {
   const start = params.get("start") ?? `${today.slice(0, 8)}01`;
   const end = params.get("end") ?? today;
   const [tab, setTab] = useState("analysis");
-  const [report, setReport] = useState(null);
-
-  useEffect(() => {
-    let ignore = false;
-    getEmotionReport(start, end).then((r) => {
-      if (!ignore) setReport(r);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, [start, end]);
+  const {
+    data: report,
+    loading,
+    error,
+    retry,
+  } = useRequest(() => getEmotionReport(start, end), [start, end]);
 
   const total = report?.totalDiaryCount ?? 0;
   const summary = report && summarize(report.distribution, total);
@@ -110,9 +108,28 @@ function ReportPage() {
           <span>{formatDotDate(end)}</span>
         </p>
         <ReportTabs tab={tab} onChange={setTab} />
-        <p className="mt-4 text-center text-label font-medium text-muted">
-          {USE_MOCK && "예시 데이터 · "}일기 {total}개
+        <p className="mt-4 min-h-4 text-center text-label font-medium text-muted">
+          {report && (
+            <>
+              {USE_MOCK && "예시 데이터 · "}일기 {total}개
+            </>
+          )}
         </p>
+
+        {loading && (
+          <LoadingState
+            className="mt-10"
+            character="note"
+            message="리포트를 만들고 있어요"
+          />
+        )}
+        {error && (
+          <ErrorRetry
+            className="mt-10"
+            message={"리포트를 불러오지 못했어요."}
+            onRetry={retry}
+          />
+        )}
 
         {report && tab === "analysis" && (
           <>

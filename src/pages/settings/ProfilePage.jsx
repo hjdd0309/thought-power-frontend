@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProfile, updateProfile } from "@/api/settings";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
+import ErrorRetry from "@/components/ErrorRetry";
+import LoadingState from "@/components/LoadingState";
 import TextField from "@/components/TextField";
 import TopBar from "@/components/TopBar";
 import { AGE_MAX, AGE_MIN, GUARDIAN_TYPES } from "@/constants/onboarding";
+import useRequest from "@/hooks/useRequest";
+import useSubmit from "@/hooks/useSubmit";
 
 const AGES = Array.from(
   { length: AGE_MAX - AGE_MIN + 1 },
@@ -28,34 +32,28 @@ function Field({ label, children }) {
 // F03 개인정보 관리 — 이름·나이·보호자 유형 표시 및 저장하기
 function ProfilePage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const profile = useRequest(() => getProfile(), []);
+  const [edits, setEdits] = useState({});
+  const form = profile.data ? { ...profile.data, ...edits } : null;
 
-  useEffect(() => {
-    let ignore = false;
-    getProfile().then((p) => {
-      if (!ignore) setForm(p);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const set = (patch) => setEdits((prev) => ({ ...prev, ...patch }));
 
-  const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await updateProfile({ ...form, name: form.name.trim() });
-      navigate("/settings");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const save = useSubmit(async () => {
+    await updateProfile({ ...form, name: form.name.trim() });
+    navigate("/settings");
+  });
 
   return (
     <>
       <TopBar title="프로필" />
+      {profile.loading && <LoadingState className="mt-16" />}
+      {profile.error && (
+        <ErrorRetry
+          className="mt-16"
+          message="프로필을 불러오지 못했어요."
+          onRetry={profile.retry}
+        />
+      )}
       {form && (
         <main className="flex flex-col gap-12.5 px-5 pt-12.75">
           <Field label="이름">
@@ -94,7 +92,13 @@ function ProfilePage() {
         </main>
       )}
       <BottomAction>
-        <Button disabled={!form?.name.trim() || saving} onClick={handleSave}>
+        {save.error && (
+          <ErrorRetry inline message="저장하지 못했어요. 다시 눌러 주세요." />
+        )}
+        <Button
+          disabled={!form?.name.trim() || save.pending}
+          onClick={() => save.run()}
+        >
           저장하기
         </Button>
       </BottomAction>

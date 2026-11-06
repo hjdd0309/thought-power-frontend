@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMonthlyDiaries } from "@/api/archive";
 import backIcon from "@/assets/icons/back.svg";
 import rightIcon from "@/assets/icons/right.svg";
 import Button from "@/components/Button";
+import ErrorRetry from "@/components/ErrorRetry";
+import { LoadingDots } from "@/components/LoadingState";
+import useRequest from "@/hooks/useRequest";
 import { getEmotion } from "@/constants/emotions";
 import { formatDotDate, toISODate } from "@/utils/date";
 
@@ -42,20 +45,14 @@ function ArchivePage() {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() + 1 };
   });
-  const [diaries, setDiaries] = useState([]);
+  const monthly = useRequest(
+    () => getMonthlyDiaries(cursor.year, cursor.month),
+    [cursor.year, cursor.month],
+  );
+  const diaries = monthly.data ?? [];
   const [range, setRange] = useState({ start: null, end: null });
   const [error, setError] = useState("");
   const lastTap = useRef({ date: null, at: 0 });
-
-  useEffect(() => {
-    let ignore = false;
-    getMonthlyDiaries(cursor.year, cursor.month).then((list) => {
-      if (!ignore) setDiaries(list);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, [cursor]);
 
   const diaryByDate = Object.fromEntries(diaries.map((d) => [d.date, d]));
   const weeks = buildMonth(cursor.year, cursor.month);
@@ -111,8 +108,11 @@ function ArchivePage() {
         >
           <img src={backIcon} alt="" width={20} height={20} />
         </button>
-        <p className="text-title font-bold">
+        <p className="relative text-title font-bold">
           {cursor.year}년 {cursor.month}월
+          {monthly.loading && (
+            <LoadingDots className="absolute top-full left-1/2 mt-1 -translate-x-1/2 scale-75" />
+          )}
         </p>
         <button
           type="button"
@@ -166,6 +166,15 @@ function ArchivePage() {
           </div>
         ))}
       </div>
+
+      {monthly.error && (
+        <ErrorRetry
+          compact
+          className="mt-3.5"
+          message="일기 기록을 불러오지 못했어요."
+          onRetry={monthly.retry}
+        />
+      )}
 
       <section className="mt-3.5 flex h-24.75 flex-col justify-center gap-3 rounded-bubble border border-border-neutral bg-white px-5">
         <PeriodRow

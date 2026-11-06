@@ -12,6 +12,10 @@ import useVoiceRecorder from "@/hooks/useVoiceRecorder";
 import { MOCK_TRANSCRIPTS } from "@/mocks/questions";
 import TranscriptConfirm from "@/pages/diary/TranscriptConfirm";
 import VoiceActions from "@/pages/diary/VoiceActions";
+import ErrorRetry from "@/components/ErrorRetry";
+import useSubmit from "@/hooks/useSubmit";
+
+const SAVE_ERROR_MESSAGE = "저장하지 못했어요. 다시 눌러 주세요.";
 
 function Title() {
   return (
@@ -24,7 +28,7 @@ function Title() {
 }
 
 // 말로 쓰기: C01 녹음 전 → C02 녹음 중 → C03 텍스트 수정·확인
-function VoiceWrite({ onSubmit, saving, onSwitchToText }) {
+function VoiceWrite({ onSubmit, saving, error, onSwitchToText }) {
   const recorder = useVoiceRecorder({
     mockTranscript: MOCK_TRANSCRIPTS.content,
   });
@@ -48,6 +52,7 @@ function VoiceWrite({ onSubmit, saving, onSwitchToText }) {
           value={draft}
           onChange={setDraft}
           saving={saving}
+          error={error}
           onRetry={() => {
             setDraft(null);
             recorder.reset();
@@ -78,7 +83,7 @@ function VoiceWrite({ onSubmit, saving, onSwitchToText }) {
 }
 
 // 글로 쓰기: D01 직접 입력 후 바로 질문 1로 이동 (텍스트 확인 단계 없음)
-function TextWrite({ initial, onSubmit, saving }) {
+function TextWrite({ initial, onSubmit, saving, error }) {
   const [text, setText] = useState(initial);
 
   return (
@@ -99,6 +104,7 @@ function TextWrite({ initial, onSubmit, saving }) {
         </p>
       </main>
       <BottomAction>
+        {error && <ErrorRetry inline message={error} />}
         <Button
           disabled={!text.trim() || saving}
           onClick={() => onSubmit(text.trim())}
@@ -114,27 +120,25 @@ function TextWrite({ initial, onSubmit, saving }) {
 function WritePage() {
   const navigate = useNavigate();
   const { diaryId, inputType, content, update } = useDiary();
-  const [saving, setSaving] = useState(false);
+  const submit = useSubmit(async (value) => {
+    await saveDiaryContent(diaryId, value);
+    update({ content: value });
+    navigate("/diary/question/1");
+  });
 
   if (!inputType) return <Navigate to="/diary/emotion" replace />;
 
-  const handleSubmit = async (value) => {
-    setSaving(true);
-    try {
-      await saveDiaryContent(diaryId, value);
-      update({ content: value });
-      navigate("/diary/question/1");
-    } finally {
-      setSaving(false);
-    }
+  const common = {
+    onSubmit: submit.run,
+    saving: submit.pending,
+    error: submit.error && SAVE_ERROR_MESSAGE,
   };
 
   return inputType === INPUT_TYPES.TEXT ? (
-    <TextWrite initial={content} onSubmit={handleSubmit} saving={saving} />
+    <TextWrite initial={content} {...common} />
   ) : (
     <VoiceWrite
-      onSubmit={handleSubmit}
-      saving={saving}
+      {...common}
       // TODO: 백엔드 연결 시 초안의 작성 방식(inputType)도 TEXT로 변경 요청
       onSwitchToText={() => update({ inputType: INPUT_TYPES.TEXT })}
     />

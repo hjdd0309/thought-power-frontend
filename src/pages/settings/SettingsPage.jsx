@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProfile } from "@/api/settings";
+import ErrorRetry from "@/components/ErrorRetry";
+import useRequest from "@/hooks/useRequest";
 import profileChevron from "@/assets/icons/profile-chevron.svg";
 import profileIcon from "@/assets/icons/profile.svg";
 import SettingRow from "@/components/SettingRow";
@@ -17,40 +18,39 @@ const MENU = [
 // F01 설정 — 프로필(개인정보 관리)·구독 관리·이용약관·고객센터·버전 정보
 // 계정 정보(F02)·로그아웃(F05)은 로그인 제외 조건으로 구현 제외
 function SettingsPage() {
-  const [profile, setProfile] = useState(null);
-
-  useEffect(() => {
-    let ignore = false;
-    getProfile().then((p) => {
-      if (!ignore) setProfile(p);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const { data: profile, error, retry } = useRequest(() => getProfile(), []);
 
   return (
     <>
       <TopBar title="설정" />
       <main className="flex flex-col px-5 pb-10">
         <p className="mt-10 text-body-sm font-medium text-muted">프로필</p>
-        <Link
-          to="/settings/profile"
-          className="mt-4.75 flex h-25 items-center justify-between rounded-bubble bg-border-neutral p-5"
-        >
-          <span className="flex size-13 shrink-0 items-center justify-center rounded-full bg-yellow">
-            <img src={profileIcon} alt="" width={28} height={28} />
-          </span>
-          <span className="flex w-54.5 flex-col gap-2">
-            <span className="text-lead font-bold text-ink">
-              {profile ? `${profile.name}, ${profile.age}세` : ""}
+        {error ? (
+          <ErrorRetry
+            compact
+            className="mt-4.75 h-25"
+            message="프로필을 불러오지 못했어요."
+            onRetry={retry}
+          />
+        ) : (
+          <Link
+            to="/settings/profile"
+            className="mt-4.75 flex h-25 items-center justify-between rounded-bubble bg-border-neutral p-5"
+          >
+            <span className="flex size-13 shrink-0 items-center justify-center rounded-full bg-yellow">
+              <img src={profileIcon} alt="" width={28} height={28} />
             </span>
-            <span className="text-body-sm font-medium text-muted">
-              보호자 유형: {profile && getGuardianLabel(profile.guardianType)}
+            <span className="flex w-54.5 flex-col gap-2">
+              <span className="text-lead font-bold text-ink">
+                {profile ? `${profile.name}, ${profile.age}세` : ""}
+              </span>
+              <span className="text-body-sm font-medium text-muted">
+                보호자 유형: {profile && getGuardianLabel(profile.guardianType)}
+              </span>
             </span>
-          </span>
-          <img src={profileChevron} alt="" width={16} height={20} />
-        </Link>
+            <img src={profileChevron} alt="" width={16} height={20} />
+          </Link>
+        )}
 
         <ul className="mt-4.75 border-t border-border-neutral">
           {MENU.map((m) => (

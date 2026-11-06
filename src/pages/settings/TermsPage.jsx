@@ -1,24 +1,29 @@
-import { useEffect, useState } from "react";
 import { getTerms } from "@/api/settings";
+import ErrorRetry from "@/components/ErrorRetry";
+import LoadingState from "@/components/LoadingState";
 import TopBar from "@/components/TopBar";
+import useRequest from "@/hooks/useRequest";
 
 // F06 이용약관 조회 — 서비스 이용약관 본문
 function TermsPage() {
-  const [terms, setTerms] = useState(null);
-
-  useEffect(() => {
-    let ignore = false;
-    getTerms().then((t) => {
-      if (!ignore) setTerms(t);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const {
+    data: terms,
+    loading,
+    error,
+    retry,
+  } = useRequest(() => getTerms(), []);
 
   return (
     <>
       <TopBar title="이용약관" />
+      {loading && <LoadingState className="mt-16" />}
+      {error && (
+        <ErrorRetry
+          className="mt-16"
+          message="이용약관을 불러오지 못했어요."
+          onRetry={retry}
+        />
+      )}
       {terms && (
         <main className="flex flex-col px-5 pt-9 pb-12">
           <h1 className="text-headline font-bold">{terms.title}</h1>

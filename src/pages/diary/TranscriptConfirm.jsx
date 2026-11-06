@@ -1,8 +1,16 @@
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
+import ErrorRetry from "@/components/ErrorRetry";
 
 // 음성 변환 결과 수정·확인 (C03 · C06 · C09 · C12)
-function TranscriptConfirm({ value, onChange, onRetry, onConfirm, saving }) {
+function TranscriptConfirm({
+  value,
+  onChange,
+  onRetry,
+  onConfirm,
+  saving,
+  error,
+}) {
   return (
     <>
       <main className="flex flex-col gap-4.5 px-5 pt-6.75">
@@ -15,7 +23,8 @@ function TranscriptConfirm({ value, onChange, onRetry, onConfirm, saving }) {
         />
       </main>
       <BottomAction className="gap-3.5">
-        <Button variant="secondary" onClick={onRetry}>
+        {error && <ErrorRetry inline message={error} />}
+        <Button variant="secondary" disabled={saving} onClick={onRetry}>
           다시 녹음
         </Button>
         <Button disabled={!value.trim() || saving} onClick={onConfirm}>

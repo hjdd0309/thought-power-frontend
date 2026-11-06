@@ -23,6 +23,8 @@ npm run dev
 ## 환경변수
 - VITE_API_BASE_URL: 백엔드 주소
 - VITE_USE_MOCK: true면 src/mocks 데이터 사용
+- VITE_MOCK_DELAY_MS: mock 응답 지연(ms, 기본 0) — 로딩 화면 테스트용
+- VITE_MOCK_FAIL_RATE: mock 실패 확률(0~1, 기본 0) — 에러·다시 시도 화면 테스트용
 - .env는 커밋하지 않음. 새 변수 추가 시 .env.example도 같이 수정
 
 ## 폴더 구조

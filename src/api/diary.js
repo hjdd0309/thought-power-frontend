@@ -18,10 +18,14 @@ export async function saveDiaryContent(diaryId, content) {
   return mockResponse({ diaryId, content });
 }
 
-/** 질문 생성 — 응답 {order, type, content} */
-export async function getQuestion(diaryId, order) {
+/**
+ * 질문 생성 — 요청은 docs/spec.md "BE1 → AI 요청" 형식
+ * @param {{ diaryId, emotion, content, order, type, previousAnswers: {order,type,question,answer}[] }} payload
+ * @returns {Promise<{ order, type, content, isFallback }>}
+ */
+export async function getQuestion({ order }) {
   const question = MOCK_QUESTIONS.find((q) => q.order === Number(order));
-  return mockResponse(question, 400);
+  return mockResponse(question);
 }
 
 /** 수정·확인한 답변 저장 */

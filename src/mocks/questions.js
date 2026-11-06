@@ -1,17 +1,10 @@
-// AI 질문 mock — 형식 {order, type, content} (docs/spec.md AI → BE1 응답 기준)
-export const MOCK_QUESTIONS = [
-  { order: 1, type: "EMOTION", content: "그때 어떤 기분이 들었나요?" },
-  {
-    order: 2,
-    type: "REASON",
-    content: "왜 그런 기분이 들었다고 생각하나요?",
-  },
-  {
-    order: 3,
-    type: "PERSPECTIVE",
-    content: "친구는 그때 어떤 기분이었을까요?",
-  },
-];
+import { DEFAULT_QUESTIONS } from "@/constants/diary";
+
+// AI 질문 mock — 형식 {order, type, content, isFallback} (docs/spec.md AI → BE1 응답 기준)
+export const MOCK_QUESTIONS = DEFAULT_QUESTIONS.map((q) => ({
+  ...q,
+  isFallback: false,
+}));
 
 // 음성 인식 결과 mock (C03·C06·C09·C12 텍스트 확인 화면 예시 문구)
 export const MOCK_TRANSCRIPTS = {

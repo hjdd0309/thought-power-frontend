@@ -4,6 +4,7 @@ import { createDiaryDraft } from "@/api/diary";
 import micIcon from "@/assets/icons/mic.svg";
 import pencilIcon from "@/assets/icons/pencil.svg";
 import Character from "@/components/Character";
+import ErrorRetry from "@/components/ErrorRetry";
 import SelectCard from "@/components/SelectCard";
 import TopBar from "@/components/TopBar";
 import { INPUT_TYPES } from "@/constants/diary";
@@ -23,15 +24,24 @@ function ModePage() {
   const navigate = useNavigate();
   const { emotion, update } = useDiary();
   const [selected, setSelected] = useState(null);
+  const [failed, setFailed] = useState(false);
 
   const handleSelect = async (inputType) => {
+    if (selected) return;
     setSelected(inputType);
-    const [draft] = await Promise.all([
-      createDiaryDraft({ emotion, inputType }),
-      wait(SELECT_FEEDBACK_MS),
-    ]);
-    update({ diaryId: draft.diaryId, inputType, content: "", answers: [] });
-    navigate("/diary/write");
+    setFailed(false);
+    try {
+      const [draft] = await Promise.all([
+        createDiaryDraft({ emotion, inputType }),
+        wait(SELECT_FEEDBACK_MS),
+      ]);
+      update({ diaryId: draft.diaryId, inputType, content: "", answers: [] });
+      navigate("/diary/write");
+    } catch {
+      // 실패하면 선택을 풀고 안내 — 카드를 다시 누르면 재시도
+      setSelected(null);
+      setFailed(true);
+    }
   };
 
   if (!emotion) return <Navigate to="/diary/emotion" replace />;
@@ -63,6 +73,13 @@ function ModePage() {
             </SelectCard>
           ))}
         </div>
+        {failed && (
+          <ErrorRetry
+            inline
+            className="mt-4"
+            message="일기를 시작하지 못했어요. 다시 눌러 주세요."
+          />
+        )}
       </main>
     </>
   );
