@@ -1,1 +1,71 @@
 @import "tailwindcss";
+
+/* OKDanDan (눈누 · 상업적 이용 가능) — 로고·타이틀 전용 */
+@font-face {
+  font-family: "OkDanDan";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2508-2@1.0/OkDanDan-Bold.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Figma 변수(design 섹션) 기준 디자인 토큰 */
+@theme {
+  --font-sans: "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --font-logo: "OkDanDan", "Noto Sans KR", sans-serif;
+
+  --color-ink: #111111;
+  --color-yellow: #fcdb04;
+  --color-yellow-light: #fff7c4;
+  --color-white: #ffffff;
+  --color-border-neutral: #f0f0f0;
+  --color-muted: #767676;
+  --color-inactive: #bfc0c4;
+
+  --color-emotion-joy: #fcdb04;
+  --color-emotion-sadness: #a1d8ea;
+  --color-emotion-anger: #f96553;
+  --color-emotion-fear: #ccabdb;
+  --color-emotion-surprise: #cbec89;
+  --color-emotion-shyness: #fbc9cd;
+
+  /* 가독성/Noto Sans KR/* 텍스트 스타일 (line-height 1.2) */
+  --text-caption: 11.5px;
+  --text-caption--line-height: 1.2;
+  --text-label: 13.5px;
+  --text-label--line-height: 1.2;
+  --text-body-sm: 15.5px;
+  --text-body-sm--line-height: 1.2;
+  --text-body: 17.5px;
+  --text-body--line-height: 1.2;
+  --text-lead: 19.5px;
+  --text-lead--line-height: 1.2;
+  --text-title: 21.5px;
+  --text-title--line-height: 1.2;
+  --text-headline: 25.5px;
+  --text-headline--line-height: 1.2;
+
+  --radius-button: 14px;
+  --radius-card: 18px;
+  --radius-bubble: 20px;
+  --radius-dialog: 24px;
+  --radius-sheet: 28px;
+
+  /* Figma 프레임 너비 */
+  --container-mobile: 402px;
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
