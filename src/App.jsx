@@ -4,7 +4,11 @@ import TabLayout from "@/components/layout/TabLayout";
 import DiaryProvider from "@/contexts/DiaryProvider";
 import OnboardingProvider from "@/contexts/OnboardingProvider";
 import EmotionPage from "@/pages/diary/EmotionPage";
+import CompletePage from "@/pages/diary/CompletePage";
 import ModePage from "@/pages/diary/ModePage";
+import QuestionRoute from "@/pages/diary/QuestionPage";
+import ReviewPage from "@/pages/diary/ReviewPage";
+import WritePage from "@/pages/diary/WritePage";
 import HomePage from "@/pages/home/HomePage";
 import AgePage from "@/pages/onboarding/AgePage";
 import DonePage from "@/pages/onboarding/DonePage";
@@ -37,6 +41,12 @@ function App() {
             {/* B 일기 작성 진입 (하단 메뉴 없음) */}
             <Route path="/diary/emotion" element={<EmotionPage />} />
             <Route path="/diary/mode" element={<ModePage />} />
+
+            {/* C·D 일기 작성 플로우 (하단 메뉴 없음) */}
+            <Route path="/diary/write" element={<WritePage />} />
+            <Route path="/diary/question/:order" element={<QuestionRoute />} />
+            <Route path="/diary/review" element={<ReviewPage />} />
+            <Route path="/diary/complete" element={<CompletePage />} />
           </Route>
         </Routes>
       </DiaryProvider>

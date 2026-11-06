@@ -63,6 +63,9 @@
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    /* 한글은 어절 단위로 줄바꿈 (Figma 텍스트와 동일) */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
   }
 
   button:not(:disabled) {
