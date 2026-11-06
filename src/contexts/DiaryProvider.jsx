@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { DiaryContext } from "@/contexts/diary";
 
 const INITIAL = {
-  diaryId: null,
   emotion: null, // JOY | SADNESS | ANGER | FEAR | SURPRISE | SHAME
   inputType: null, // VOICE | TEXT
   content: "",
@@ -11,6 +10,7 @@ const INITIAL = {
 };
 
 // 일기 작성 중 데이터 — 감정·방식·본문·질문/답변을 페이지 간에 공유
+// 서버 저장은 C13 완료하기에서 한 번만 하고, 실패해도 여기 값은 그대로 남아 다시 시도할 수 있다
 function DiaryProvider({ children }) {
   const [state, setState] = useState(INITIAL);
 

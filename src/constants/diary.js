@@ -30,7 +30,6 @@ export const DEFAULT_QUESTIONS = [
 
 export const getDefaultQuestion = (order) => ({
   ...DEFAULT_QUESTIONS.find((q) => q.order === Number(order)),
-  isFallback: true,
 });
 
 // 글로 쓰기 본문 최대 글자 수 (D01 0 / 500, DB 제약 동일)

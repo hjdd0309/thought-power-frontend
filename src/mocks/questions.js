@@ -1,10 +1,7 @@
 import { DEFAULT_QUESTIONS } from "@/constants/diary";
 
-// AI 질문 mock — 형식 {order, type, content, isFallback} (docs/spec.md AI → BE1 응답 기준)
-export const MOCK_QUESTIONS = DEFAULT_QUESTIONS.map((q) => ({
-  ...q,
-  isFallback: false,
-}));
+// AI 질문 mock — 형식 {order, type, content} (docs/spec.md AI → BE1 응답 기준)
+export const MOCK_QUESTIONS = DEFAULT_QUESTIONS;
 
 // 음성 인식 결과 mock (C03·C06·C09·C12 텍스트 확인 화면 예시 문구)
 export const MOCK_TRANSCRIPTS = {

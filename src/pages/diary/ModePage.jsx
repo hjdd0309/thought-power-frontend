@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { createDiaryDraft } from "@/api/diary";
 import micIcon from "@/assets/icons/mic.svg";
 import pencilIcon from "@/assets/icons/pencil.svg";
 import Character from "@/components/Character";
-import ErrorRetry from "@/components/ErrorRetry";
 import SelectCard from "@/components/SelectCard";
 import TopBar from "@/components/TopBar";
 import { INPUT_TYPES } from "@/constants/diary";
@@ -19,29 +17,18 @@ const MODES = [
 const SELECT_FEEDBACK_MS = 250;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// B04 선택 전 / B05_0 말로 쓰기 / B05_1 글로 쓰기 — 선택 시 초안 생성 후 작성 화면 이동
+// B04 선택 전 / B05_0 말로 쓰기 / B05_1 글로 쓰기 — 선택 시 작성 화면 이동 (저장은 C13 완료 시 한 번에)
 function ModePage() {
   const navigate = useNavigate();
   const { emotion, update } = useDiary();
   const [selected, setSelected] = useState(null);
-  const [failed, setFailed] = useState(false);
 
   const handleSelect = async (inputType) => {
     if (selected) return;
     setSelected(inputType);
-    setFailed(false);
-    try {
-      const [draft] = await Promise.all([
-        createDiaryDraft({ emotion, inputType }),
-        wait(SELECT_FEEDBACK_MS),
-      ]);
-      update({ diaryId: draft.diaryId, inputType, content: "", answers: [] });
-      navigate("/diary/write");
-    } catch {
-      // 실패하면 선택을 풀고 안내 — 카드를 다시 누르면 재시도
-      setSelected(null);
-      setFailed(true);
-    }
+    await wait(SELECT_FEEDBACK_MS);
+    update({ inputType, content: "", answers: [] });
+    navigate("/diary/write");
   };
 
   if (!emotion) return <Navigate to="/diary/emotion" replace />;
@@ -73,13 +60,6 @@ function ModePage() {
             </SelectCard>
           ))}
         </div>
-        {failed && (
-          <ErrorRetry
-            inline
-            className="mt-4"
-            message="일기를 시작하지 못했어요. 다시 눌러 주세요."
-          />
-        )}
       </main>
     </>
   );

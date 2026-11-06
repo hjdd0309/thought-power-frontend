@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { completeDiary } from "@/api/diary";
+import { saveDiary } from "@/api/diary";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import DiarySummary from "@/components/DiarySummary";
@@ -11,12 +11,24 @@ import useSubmit from "@/hooks/useSubmit";
 import { toISODate } from "@/utils/date";
 
 // C13 / D06 전체 기록 확인 — 감정·날짜·본문·질문 3개와 답변, 완료하기
+// 완료하기에서 작성 내용 전체를 한 번에 저장한다. 실패해도 DiaryContext는 그대로라 다시 누르면 재시도
 function ReviewPage() {
   const navigate = useNavigate();
   const diary = useDiary();
+  const date = toISODate();
   const submit = useSubmit(async () => {
-    const { diaryId } = await completeDiary(diary);
-    diary.update({ diaryId });
+    await saveDiary({
+      emotion: diary.emotion,
+      inputType: diary.inputType,
+      date,
+      content: diary.content,
+      questions: diary.answers.map(({ order, type, content, answer }) => ({
+        order,
+        type,
+        content,
+        answer,
+      })),
+    });
     navigate("/diary/complete", { replace: true });
   });
 
@@ -32,7 +44,7 @@ function ReviewPage() {
         <h1 className="text-headline font-bold">이렇게 기록할까요?</h1>
         <DiarySummary
           emotion={diary.emotion}
-          date={toISODate()}
+          date={date}
           content={diary.content}
           questions={diary.answers}
         />

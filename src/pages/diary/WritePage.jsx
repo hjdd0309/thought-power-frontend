@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { saveDiaryContent } from "@/api/diary";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import Character from "@/components/Character";
@@ -12,10 +11,6 @@ import useVoiceRecorder from "@/hooks/useVoiceRecorder";
 import { MOCK_TRANSCRIPTS } from "@/mocks/questions";
 import TranscriptConfirm from "@/pages/diary/TranscriptConfirm";
 import VoiceActions from "@/pages/diary/VoiceActions";
-import ErrorRetry from "@/components/ErrorRetry";
-import useSubmit from "@/hooks/useSubmit";
-
-const SAVE_ERROR_MESSAGE = "저장하지 못했어요. 다시 눌러 주세요.";
 
 function Title() {
   return (
@@ -28,7 +23,7 @@ function Title() {
 }
 
 // 말로 쓰기: C01 녹음 전 → C02 녹음 중 → C03 텍스트 수정·확인
-function VoiceWrite({ onSubmit, saving, error, onSwitchToText }) {
+function VoiceWrite({ onSubmit, onSwitchToText }) {
   const recorder = useVoiceRecorder({
     mockTranscript: MOCK_TRANSCRIPTS.content,
   });
@@ -51,8 +46,6 @@ function VoiceWrite({ onSubmit, saving, error, onSwitchToText }) {
         <TranscriptConfirm
           value={draft}
           onChange={setDraft}
-          saving={saving}
-          error={error}
           onRetry={() => {
             setDraft(null);
             recorder.reset();
@@ -83,7 +76,7 @@ function VoiceWrite({ onSubmit, saving, error, onSwitchToText }) {
 }
 
 // 글로 쓰기: D01 직접 입력 후 바로 질문 1로 이동 (텍스트 확인 단계 없음)
-function TextWrite({ initial, onSubmit, saving, error }) {
+function TextWrite({ initial, onSubmit }) {
   const [text, setText] = useState(initial);
 
   return (
@@ -104,11 +97,7 @@ function TextWrite({ initial, onSubmit, saving, error }) {
         </p>
       </main>
       <BottomAction>
-        {error && <ErrorRetry inline message={error} />}
-        <Button
-          disabled={!text.trim() || saving}
-          onClick={() => onSubmit(text.trim())}
-        >
+        <Button disabled={!text.trim()} onClick={() => onSubmit(text.trim())}>
           다음으로
         </Button>
       </BottomAction>
@@ -119,27 +108,22 @@ function TextWrite({ initial, onSubmit, saving, error }) {
 // /diary/write — 작성 방식에 따라 C01~C03 또는 D01
 function WritePage() {
   const navigate = useNavigate();
-  const { diaryId, inputType, content, update } = useDiary();
-  const submit = useSubmit(async (value) => {
-    await saveDiaryContent(diaryId, value);
+  const { inputType, content, update } = useDiary();
+
+  // 본문은 Context에만 담고 바로 질문 1로 이동 (저장은 C13 완료 시 한 번에)
+  const handleSubmit = (value) => {
     update({ content: value });
     navigate("/diary/question/1");
-  });
+  };
 
   if (!inputType) return <Navigate to="/diary/emotion" replace />;
 
-  const common = {
-    onSubmit: submit.run,
-    saving: submit.pending,
-    error: submit.error && SAVE_ERROR_MESSAGE,
-  };
-
   return inputType === INPUT_TYPES.TEXT ? (
-    <TextWrite initial={content} {...common} />
+    <TextWrite initial={content} onSubmit={handleSubmit} />
   ) : (
     <VoiceWrite
-      {...common}
-      // TODO: 백엔드 연결 시 초안의 작성 방식(inputType)도 TEXT로 변경 요청
+      onSubmit={handleSubmit}
+      // 글로 쓰기로 바꾸면 완료 저장 때 최종 작성 방식(TEXT)만 보낸다
       onSwitchToText={() => update({ inputType: INPUT_TYPES.TEXT })}
     />
   );

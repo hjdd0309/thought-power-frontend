@@ -7,18 +7,18 @@
 
 ## 0. 공통 규칙
 
-| 항목         | 규칙                                                                                                                          |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Base URL     | `VITE_API_BASE_URL` (배포 환경은 **https** 필수)                                                                              |
-| 인증         | 없음. 서버가 기본 사용자(`child_id = 1`)로 고정                                                                               |
-| Content-Type | `application/json; charset=utf-8`                                                                                             |
-| 날짜         | `YYYY-MM-DD` 문자열 (예: `"2026-11-06"`). 일기 날짜(`diary_date`)는 서버가 **Asia/Seoul** 기준으로 정한다                     |
-| 일시         | ISO 8601 UTC (예: `"2026-11-06T05:12:00Z"`) — 프론트는 현재 일시 필드를 쓰지 않음                                             |
-| 감정 코드    | `JOY`(기쁨) · `SADNESS`(슬픔) · `ANGER`(화남) · `FEAR`(무서움) · `SURPRISE`(놀람) · `SHAME`(부끄러움) — 확정 (DB 시드와 동일) |
-| 질문 타입    | `order` 1=`EMOTION`(감정 탐색), 2=`REASON`(이유 탐색), 3=`PERSPECTIVE`(관점 확장) — DB `QuestionStage`, `sequence`와 동일     |
-| 작성 방식    | `VOICE` · `TEXT` (DB `InputType`). TEXT 본문은 500자 이하                                                                     |
-| 보호자 유형  | `PARENT` · `SCHOOL_TEACHER` · `FACILITY_TEACHER` · `OTHER` (DB `GuardianType`)                                                |
-| 필드 표기    | JSON은 camelCase                                                                                                              |
+| 항목         | 규칙                                                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Base URL     | `VITE_API_BASE_URL` (배포 환경은 **https** 필수)                                                                                     |
+| 인증         | 없음. 서버가 기본 사용자(`child_id = 1`)로 고정                                                                                      |
+| Content-Type | `application/json; charset=utf-8`                                                                                                    |
+| 날짜         | `YYYY-MM-DD` 문자열 (예: `"2026-11-06"`). 일기 날짜(`diary_date`)는 완료 저장 때 프론트가 `date`로 보낸다 (**Asia/Seoul** 기준 오늘) |
+| 일시         | ISO 8601 UTC (예: `"2026-11-06T05:12:00Z"`) — 프론트는 현재 일시 필드를 쓰지 않음                                                    |
+| 감정 코드    | `JOY`(기쁨) · `SADNESS`(슬픔) · `ANGER`(화남) · `FEAR`(무서움) · `SURPRISE`(놀람) · `SHAME`(부끄러움) — 확정 (DB 시드와 동일)        |
+| 질문 타입    | `order` 1=`EMOTION`(감정 탐색), 2=`REASON`(이유 탐색), 3=`PERSPECTIVE`(관점 확장) — DB `QuestionStage`, `sequence`와 동일            |
+| 작성 방식    | `VOICE` · `TEXT` (DB `InputType`). TEXT 본문은 500자 이하                                                                            |
+| 보호자 유형  | `PARENT` · `SCHOOL_TEACHER` · `FACILITY_TEACHER` · `OTHER` (DB `GuardianType`)                                                       |
+| 필드 표기    | JSON은 camelCase                                                                                                                     |
 
 ### 에러 응답 (제안)
 
@@ -38,7 +38,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 | 409            | `DIARY_ALREADY_EXISTS` (하루 1개 제약)                      | 안내 후 보관함으로 이동 — 확인 필요 2 |
 | 500 / 네트워크 | `INTERNAL_ERROR`                                            | 공통 에러 안내 + 다시 시도            |
 
-질문 생성은 AI 실패 시에도 **200 + 기본 질문 + `isFallback: true`** 로 응답한다(`docs/spec.md`: BE1이 `isFallback` 설정). 프론트도 요청 자체가 실패하면 같은 기본 질문으로 대체한다.
+질문 요청 응답은 `{ order, type, content }` 이다. AI 실패 시 서버가 기본 질문으로 200 응답해도 되고, 요청 자체가 실패하면 프론트가 같은 기본 질문으로 대체한다.
 
 ---
 
@@ -66,41 +66,16 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 
 ## 2. 일기 작성 (B·C·D 화면)
 
-> ⚠️ **구조 차이 (확인 필요 2)**: 스키마 주석은 "일기 1개 + 질문 3개를 **한 트랜잭션**으로 저장, 일기 UPDATE 엔드포인트 없음"이다.
-> 반면 `docs/spec.md`는 "선택한 감정·작성 방식으로 **초안 생성** → 본문 저장 → 질문 생성 → 답변 저장 → 작성 완료"로 단계별 저장을 말한다.
-> 프론트는 현재 단계별 함수로 나뉘어 있지만, 일기 작성 데이터를 `DiaryContext`에 모두 들고 있으므로 **A안(최종 1회 저장)** 으로도 바로 바꿀 수 있다.
+> **저장 방식 확정**: 작성 중 데이터(감정·작성 방식·본문·질문/답변)는 프론트 `DiaryContext`가 들고 있다가 **C13 / D06 완료하기에서 한 번에 저장**한다.
+> 단계별 저장(초안 생성·본문 저장·답변 저장)은 없다. 서버 호출은 **AI 질문 요청**(저장 없음)과 **완료 저장** 두 가지뿐이다. (DB 스키마 "일기 1개 + 질문 3개를 한 트랜잭션으로 저장"과 동일)
 >
-> - **A안 (스키마 기준, 프론트 추천)**: 질문 생성만 매번 호출(저장 X), 완료하기에서 전체를 한 번에 저장
-> - **B안 (spec 기준)**: 초안 테이블/상태 컬럼 추가 후 단계별 저장
+> - B04~B05 작성 방식 선택, C03 / D01 본문 확인, C06·C09·C12 / D03~D05 답변 확인은 모두 프론트 상태만 바꾸고 다음 화면으로 이동
+> - 말로 쓰기 → 글로 쓰기로 바꿔도 별도 요청 없음. 완료 저장 때 **최종 작성 방식**(`inputType`)만 보낸다
+> - 완료 저장 실패 시 `DiaryContext`를 그대로 유지하고 C13 전체 확인 화면에서 완료하기를 다시 눌러 재시도한다
 
-### `createDiaryDraft` — 초안 생성 (B안에서만)
+### `getQuestion` — AI 질문 요청 (저장 없음)
 
-- **POST** `/api/diaries/drafts` · 화면 **B04~B05** (작성 방식 선택 시)
-
-```json
-// 요청
-{ "emotion": "SADNESS", "inputType": "VOICE" }
-// 응답 201
-{ "diaryId": 101, "emotion": "SADNESS", "inputType": "VOICE" }
-```
-
-- **차이**: DB에 초안 개념 없음. A안이면 이 API는 없어지고 프론트는 `diaryId` 없이 진행
-
-### `saveDiaryContent` — 본문 저장 (B안에서만)
-
-- **PUT** `/api/diaries/drafts/{diaryId}/content` · 화면 **C03 / D01**
-
-```json
-// 요청
-{ "content": "오늘 친구랑 놀다가 조금 속상한 일이 있었어요." }
-// 응답 200
-{ "diaryId": 101, "content": "오늘 친구랑 놀다가 조금 속상한 일이 있었어요." }
-```
-
-### `getQuestion` — AI 질문 생성
-
-- **POST** `/api/diaries/questions` (A안, 저장 없음) 또는 **POST** `/api/diaries/drafts/{diaryId}/questions` (B안)
-- 화면 **C04 / C07 / C10 / D03 / D04 / D05** 진입 시
+- **POST** `/api/diaries/questions` · 화면 **C04 / C07 / C10 / D03 / D04 / D05** 진입 시
 
 ```json
 // 요청 — docs/spec.md "BE1 → AI 요청"과 같은 형식
@@ -114,39 +89,31 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
   ]
 }
 // 응답 200
-{ "order": 2, "type": "REASON", "content": "왜 그런 기분이 들었다고 생각하나요?", "isFallback": false }
+{ "order": 2, "type": "REASON", "content": "왜 그런 기분이 들었다고 생각하나요?" }
 ```
 
+- `previousAnswers`: 질문 1은 `[]`, 질문 2는 1번, 질문 3은 1·2번 질문·답변 (사용자가 수정·확인한 최종 답변)
+- 서버는 질문을 저장하지 않는다. 화면에 보여준 질문 문구는 프론트가 들고 있다가 완료 저장 때 함께 보낸다
 - 프론트 처리: 대기 중 로딩 연출, 실패 시 아래 기본 질문으로 대체하고 진행
 
-| order | type        | 기본 질문 (프론트 `src/mocks/questions.js`) |
+| order | type        | 기본 질문 (프론트 `src/constants/diary.js`) |
 | ----- | ----------- | ------------------------------------------- |
 | 1     | EMOTION     | 그때 어떤 기분이 들었나요?                  |
 | 2     | REASON      | 왜 그런 기분이 들었다고 생각하나요?         |
 | 3     | PERSPECTIVE | 친구는 그때 어떤 기분이었을까요?            |
 
-- **차이**: spec의 `questionId`는 B안에서만 의미 있음. 기본 질문 문구는 AI 담당 기본 질문과 맞춰야 함 → 확인 필요 7
+- 기본 질문 문구는 AI 담당 기본 질문과 맞춰야 함 → 확인 필요 7
 
-### `saveAnswer` — 답변 저장 (B안에서만)
+### `saveDiary` — 일기 완료 저장
 
-- **PUT** `/api/diaries/drafts/{diaryId}/questions/{order}/answer` · 화면 **C06 / C09 / C12 / D03~D05**
-
-```json
-// 요청
-{ "answer": "내 장난감을 말없이 가져가서 속상했어요." }
-// 응답 200
-{ "diaryId": 101, "order": 1, "answer": "내 장난감을 말없이 가져가서 속상했어요." }
-```
-
-### `completeDiary` — 작성 완료
-
-- **POST** `/api/diaries` (A안) 또는 **POST** `/api/diaries/drafts/{diaryId}/complete` (B안) · 화면 **C13 / D06** 완료하기
+- **POST** `/api/diaries` · 화면 **C13 / D06** 완료하기
 
 ```json
-// 요청 (A안 — 전체 한 번에)
+// 요청 — 전체 한 번에
 {
   "emotion": "SADNESS",
   "inputType": "VOICE",
+  "date": "2026-11-06",
   "content": "오늘 친구랑 놀다가 조금 속상한 일이 있었어요.",
   "questions": [
     { "order": 1, "type": "EMOTION", "content": "그때 어떤 기분이 들었나요?", "answer": "속상했어요." },
@@ -155,11 +122,14 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
   ]
 }
 // 응답 201
-{ "diaryId": 102, "date": "2026-11-06", "completed": true }
+{ "diaryId": 102, "date": "2026-11-06" }
 ```
 
-- 음성 인식 결과 수정은 클라이언트에서만 하고, 최종 텍스트를 `inputType: "VOICE"`로 저장 (스키마 주석과 일치)
-- **차이**: 하루 1개 제약(`UNIQUE(child_id, diary_date)`) → 같은 날 두 번째 작성 시 409. 프론트 mock은 하루 여러 개 허용 → 확인 필요 2
+- `inputType`: 최종 작성 방식. 말로 쓰다 글로 쓰기로 바꾼 경우 `TEXT`
+- `date`: 작성한 날(오늘, Asia/Seoul 기준) `YYYY-MM-DD`
+- `questions`: 화면에 보여준 질문(`content`)과 사용자가 수정·확인한 답변(`answer`) 3쌍
+- 음성 인식 결과 수정은 클라이언트에서만 하고, 최종 텍스트를 저장 (스키마 주석과 일치)
+- 하루 1개 제약(`UNIQUE(child_id, diary_date)`) → 같은 날 두 번째 저장 시 409 `DIARY_ALREADY_EXISTS` → 확인 필요 2
 
 ---
 
@@ -304,28 +274,30 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 
 ## 5. 확정
 
-| 항목                                | 확정 내용                                                                                                                                                                       | 반영                                                                                                              |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 나이 범위 (구 확인 필요 3)          | **6~10세** (DB `ck_children_2`와 동일)                                                                                                                                          | `src/constants/onboarding.js` `AGE_MIN=6`·`AGE_MAX=10` → A07 슬라이더, F03 나이 선택 / `docs/spec.md` ON-07·ST-03 |
-| 보호자 유형                         | 학교 선생님 `SCHOOL_TEACHER` · **아동시설 선생님 `FACILITY_TEACHER`** · 부모님 `PARENT` · 기타 `OTHER`                                                                          | `docs/spec.md` ON-05·ST-03 ("학원 선생님" 표기 수정)                                                              |
-| E04 차트 모양                       | **막대 차트** (Figma 기준, 도넛 아님)                                                                                                                                           | `docs/spec.md` RP-04                                                                                              |
-| E05 카드 제목 (`trend_title`)       | **프론트 고정 문구** "다양한 마음을 기록했어요". API 응답에 `trendTitle` 없음. **백엔드 컬럼 제거 또는 null 허용 요청함** (DB `trend_title`은 현재 `NOT NULL` + 빈 문자열 금지) | `src/pages/report/ReportPage.jsx` `TREND_CARD_TITLE`                                                              |
-| 약관 동의 (구 확인 필요 5)          | **화면 표시용, 저장 안 함**. 온보딩 완료 요청에 `agreements`를 보내지 않음 (DB `children`에도 동의 컬럼 없음)                                                                   | `src/api/onboarding.js`, `src/pages/onboarding/DonePage.jsx`                                                      |
-| 부끄러움 감정 코드 (구 확인 필요 1) | **`SHAME`** (DB 시드와 동일)                                                                                                                                                    | `src/constants/emotions.js`, `src/mocks/*` / `docs/spec.md` 감정 코드 표·AI 연동 예시                             |
+| 항목                                    | 확정 내용                                                                                                                                                                       | 반영                                                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 나이 범위 (구 확인 필요 3)              | **6~10세** (DB `ck_children_2`와 동일)                                                                                                                                          | `src/constants/onboarding.js` `AGE_MIN=6`·`AGE_MAX=10` → A07 슬라이더, F03 나이 선택 / `docs/spec.md` ON-07·ST-03 |
+| 보호자 유형                             | 학교 선생님 `SCHOOL_TEACHER` · **아동시설 선생님 `FACILITY_TEACHER`** · 부모님 `PARENT` · 기타 `OTHER`                                                                          | `docs/spec.md` ON-05·ST-03 ("학원 선생님" 표기 수정)                                                              |
+| E04 차트 모양                           | **막대 차트** (Figma 기준, 도넛 아님)                                                                                                                                           | `docs/spec.md` RP-04                                                                                              |
+| E05 카드 제목 (`trend_title`)           | **프론트 고정 문구** "다양한 마음을 기록했어요". API 응답에 `trendTitle` 없음. **백엔드 컬럼 제거 또는 null 허용 요청함** (DB `trend_title`은 현재 `NOT NULL` + 빈 문자열 금지) | `src/pages/report/ReportPage.jsx` `TREND_CARD_TITLE`                                                              |
+| 약관 동의 (구 확인 필요 5)              | **화면 표시용, 저장 안 함**. 온보딩 완료 요청에 `agreements`를 보내지 않음 (DB `children`에도 동의 컬럼 없음)                                                                   | `src/api/onboarding.js`, `src/pages/onboarding/DonePage.jsx`                                                      |
+| 부끄러움 감정 코드 (구 확인 필요 1)     | **`SHAME`** (DB 시드와 동일)                                                                                                                                                    | `src/constants/emotions.js`, `src/mocks/*` / `docs/spec.md` 감정 코드 표·AI 연동 예시                             |
+| 일기 저장 방식 (구 확인 필요 2)         | 작성 데이터는 `DiaryContext`가 들고 있다가 **완료 시 한 번에 저장** (`POST /api/diaries`). 단계별 저장 없음. AI 질문 요청은 저장 없이 질문만 받음                               | `src/api/diary.js` `getQuestion`·`saveDiary`, `src/pages/diary/*`                                                 |
+| 작성 방식 VOICE → TEXT (구 확인 필요 8) | 별도 요청 없이 완료 저장 때 최종 `inputType`만 보냄                                                                                                                             | `src/pages/diary/WritePage.jsx`, `QuestionPage.jsx`                                                               |
 
 ## 6. 확인 필요
 
 번호는 문서 본문의 "확인 필요 N" 참조와 맞추기 위해 그대로 둔다.
 
-| #   | 항목                        | 프론트 현재                             | 백엔드/명세                                                                                    | 제안                                                                                                   |
-| --- | --------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 1   | ~~부끄러움 감정 코드~~      | —                                       | —                                                                                              | **확정 (5. 확정 참고)** — `SHAME`으로 통일                                                             |
-| 2   | 일기 저장 구조 / 하루 1개   | 단계별 함수 + 하루 여러 개              | DB: 1회 트랜잭션 저장, `UNIQUE(child_id, diary_date)` / spec: 초안·단계별 저장, days에 여러 개 | A안(최종 1회 저장) 추천. 하루 1개면 홈에서 "오늘 이미 작성" 처리 필요                                  |
-| 3   | ~~나이 범위~~               | —                                       | —                                                                                              | **확정 (5. 확정 참고)**. 남은 것: 응답에 `ageRecordedAt` 포함 여부                                     |
-| 4   | 리포트 문구 필드            | `description`·`advice`·`interpretation` | DB `most/least_emotion_reason`·`parent_advice`·`trend_interpretation`                          | 응답 필드명 매핑 확정. E04 최다/최소 감정 설명을 AI 문구로 쓸지. (`trend_title`은 확정 — 5. 확정 참고) |
-| 5   | ~~약관 동의 저장~~          | —                                       | —                                                                                              | **확정 (5. 확정 참고)** — 화면 표시용, 저장 안 함                                                      |
-| 6   | 약관·구독·고객센터·버전     | API 함수로 mock 조회                    | DB 없음, 약관은 프론트 표시                                                                    | 정적 데이터로 프론트에 두고 API 제외 검토                                                              |
-| 7   | 기본 질문 문구              | 위 표의 3문장                           | AI 담당 "기본 질문 제공"                                                                       | 문구 통일                                                                                              |
-| 8   | 작성 방식 VOICE → TEXT 변경 | 프론트 상태만 변경                      | B안이면 변경 API 필요, A안이면 최종 저장 시 `inputType`만 보내면 됨                            | A안이면 별도 API 불필요                                                                                |
-| 9   | 에러 응답 형식              | 위 공통 규칙 제안                       | 미정                                                                                           | `{ code, message }` 합의                                                                               |
-| 10  | 음성 인식 외부 전송         | Chrome Web Speech API 사용              | —                                                                                              | Chrome은 인식을 위해 음성을 Google 서비스로 보냄. 개인정보 처리방침/보호자 동의 문구 반영 여부         |
+| #   | 항목                            | 프론트 현재                             | 백엔드/명세                                                           | 제안                                                                                                   |
+| --- | ------------------------------- | --------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | ~~부끄러움 감정 코드~~          | —                                       | —                                                                     | **확정 (5. 확정 참고)** — `SHAME`으로 통일                                                             |
+| 2   | 하루 1개 (저장 구조는 확정)     | 하루 여러 개                            | DB `UNIQUE(child_id, diary_date)`                                     | 저장 구조는 **확정 (5. 확정 참고)**. 하루 1개면 홈에서 "오늘 이미 작성" 처리 필요                      |
+| 3   | ~~나이 범위~~                   | —                                       | —                                                                     | **확정 (5. 확정 참고)**. 남은 것: 응답에 `ageRecordedAt` 포함 여부                                     |
+| 4   | 리포트 문구 필드                | `description`·`advice`·`interpretation` | DB `most/least_emotion_reason`·`parent_advice`·`trend_interpretation` | 응답 필드명 매핑 확정. E04 최다/최소 감정 설명을 AI 문구로 쓸지. (`trend_title`은 확정 — 5. 확정 참고) |
+| 5   | ~~약관 동의 저장~~              | —                                       | —                                                                     | **확정 (5. 확정 참고)** — 화면 표시용, 저장 안 함                                                      |
+| 6   | 약관·구독·고객센터·버전         | API 함수로 mock 조회                    | DB 없음, 약관은 프론트 표시                                           | 정적 데이터로 프론트에 두고 API 제외 검토                                                              |
+| 7   | 기본 질문 문구                  | 위 표의 3문장                           | AI 담당 "기본 질문 제공"                                              | 문구 통일                                                                                              |
+| 8   | ~~작성 방식 VOICE → TEXT 변경~~ | —                                       | —                                                                     | **확정 (5. 확정 참고)** — 별도 요청 없음                                                               |
+| 9   | 에러 응답 형식                  | 위 공통 규칙 제안                       | 미정                                                                  | `{ code, message }` 합의                                                                               |
+| 10  | 음성 인식 외부 전송             | Chrome Web Speech API 사용              | —                                                                     | Chrome은 인식을 위해 음성을 Google 서비스로 보냄. 개인정보 처리방침/보호자 동의 문구 반영 여부         |
