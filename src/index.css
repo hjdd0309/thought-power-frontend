@@ -33,6 +33,8 @@
   /* 가독성/Noto Sans KR/* 텍스트 스타일 (line-height 1.2) */
   --text-caption: 11.5px;
   --text-caption--line-height: 1.2;
+  --text-legend: 12.5px;
+  --text-legend--line-height: 1.2;
   --text-label: 13.5px;
   --text-label--line-height: 1.2;
   --text-body-sm: 15.5px;

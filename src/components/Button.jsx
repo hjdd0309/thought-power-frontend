@@ -5,7 +5,7 @@ const VARIANTS = {
 
 const SIZES = {
   lg: "h-14 w-full px-5.5", // 버튼/다음으로 (362×56)
-  md: "h-12 w-full", // 대화상자 버튼 (132×48)
+  md: "h-12 min-w-0 flex-1", // 대화상자 버튼 (132×48, 두 개가 나란히)
   sm: "h-8.5 w-16 px-3", // 버튼 · 짧은 너비 (64×34)
 };
 
@@ -23,7 +23,7 @@ function Button({
     <button
       type="button"
       disabled={disabled}
-      className={`flex shrink-0 items-center justify-center rounded-button text-body font-medium text-ink ${SIZES[size]} ${color} ${className}`}
+      className={`flex items-center justify-center rounded-button text-body font-medium text-ink ${SIZES[size]} ${color} ${className}`}
       {...props}
     >
       {children}

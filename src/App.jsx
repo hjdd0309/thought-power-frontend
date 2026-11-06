@@ -2,6 +2,9 @@ import { Route, Routes } from "react-router-dom";
 import MobileLayout from "@/components/layout/MobileLayout";
 import TabLayout from "@/components/layout/TabLayout";
 import DiaryProvider from "@/contexts/DiaryProvider";
+import ArchivePage from "@/pages/archive/ArchivePage";
+import DiaryDetailPage from "@/pages/archive/DiaryDetailPage";
+import ReportPage from "@/pages/report/ReportPage";
 import OnboardingProvider from "@/contexts/OnboardingProvider";
 import EmotionPage from "@/pages/diary/EmotionPage";
 import CompletePage from "@/pages/diary/CompletePage";
@@ -36,7 +39,12 @@ function App() {
             {/* 하단 메뉴가 보이는 화면: 홈·보관함·리포트 */}
             <Route element={<TabLayout />}>
               <Route path="/home" element={<HomePage />} />
+              <Route path="/archive" element={<ArchivePage />} />
+              <Route path="/report" element={<ReportPage />} />
             </Route>
+
+            {/* E 일기 상세 (Figma E02: 하단 메뉴 없음, 뒤로가기) */}
+            <Route path="/archive/:diaryId" element={<DiaryDetailPage />} />
 
             {/* B 일기 작성 진입 (하단 메뉴 없음) */}
             <Route path="/diary/emotion" element={<EmotionPage />} />
