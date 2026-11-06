@@ -34,7 +34,12 @@ function ProfilePage() {
   const navigate = useNavigate();
   const profile = useRequest(() => getProfile(), []);
   const [edits, setEdits] = useState({});
-  const form = profile.data ? { ...profile.data, ...edits } : null;
+  const merged = profile.data ? { ...profile.data, ...edits } : null;
+  // 나이는 확정 범위(6~10세) 안으로 보정 — 선택 상자에 없는 값이 저장되지 않게
+  const form = merged && {
+    ...merged,
+    age: Math.min(AGE_MAX, Math.max(AGE_MIN, merged.age)),
+  };
 
   const set = (patch) => setEdits((prev) => ({ ...prev, ...patch }));
 

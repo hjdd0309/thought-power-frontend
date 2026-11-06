@@ -9,10 +9,10 @@ export const GUARDIAN_TYPES = [
 export const getGuardianLabel = (code) =>
   GUARDIAN_TYPES.find((g) => g.code === code)?.label ?? "";
 
-// 나이 선택 범위 — Figma A07 슬라이더(6–13세) 기준.
-// TODO: 백엔드 DB 제약은 6–10세(ck_children_2). 범위 확정 후 맞추기
+// 나이 선택 범위 — 팀 확정 6–10세 (백엔드 DB 제약 ck_children_2와 동일)
+// A07 슬라이더와 F03 개인정보 관리 나이 선택이 함께 사용
 export const AGE_MIN = 6;
-export const AGE_MAX = 13;
+export const AGE_MAX = 10;
 export const AGE_DEFAULT = 8;
 
 // 약관 동의 항목 (A03)
