@@ -11,9 +11,10 @@ import { markOnboarded } from "@/utils/storage";
 // A08 시작 준비 완료 — 온보딩 값 일괄 저장 후 홈 이동
 function DonePage() {
   const navigate = useNavigate();
-  const { agreements, guardianType, name, age } = useOnboarding();
+  const { guardianType, name, age } = useOnboarding();
   const submit = useSubmit(async () => {
-    await completeOnboarding({ agreements, guardianType, name, age });
+    // 약관 동의값은 화면 표시용 — 저장 요청에 포함하지 않는다
+    await completeOnboarding({ guardianType, name, age });
     markOnboarded();
     navigate("/home", { replace: true });
   });

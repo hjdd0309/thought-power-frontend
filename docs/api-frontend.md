@@ -53,14 +53,13 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 {
   "name": "지우",
   "age": 8,
-  "guardianType": "PARENT",
-  "agreements": { "guardian": true, "terms": true, "privacy": true }
+  "guardianType": "PARENT"
 }
 // 응답 200
 { "name": "지우", "age": 8, "guardianType": "PARENT", "completed": true }
 ```
 
-- **차이**: DB `children`에 약관 동의 컬럼이 없음 → `agreements`를 저장할지, 프론트만 검증할지 확인 필요 5
+- 약관 동의값은 **화면 표시용, 저장 안 함** (확정 — 5. 확정 참고). 요청에 `agreements`를 보내지 않는다. 필수 동의 전에는 A03 완료 버튼이 비활성이라 프론트에서만 막는다
 - 나이 범위 **6~10세 확정** (DB 제약과 동일). 프론트도 같은 범위만 보낸다
 
 ---
@@ -311,6 +310,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 | 보호자 유형                   | 학교 선생님 `SCHOOL_TEACHER` · **아동시설 선생님 `FACILITY_TEACHER`** · 부모님 `PARENT` · 기타 `OTHER`                                                                          | `docs/spec.md` ON-05·ST-03 ("학원 선생님" 표기 수정)                                                              |
 | E04 차트 모양                 | **막대 차트** (Figma 기준, 도넛 아님)                                                                                                                                           | `docs/spec.md` RP-04                                                                                              |
 | E05 카드 제목 (`trend_title`) | **프론트 고정 문구** "다양한 마음을 기록했어요". API 응답에 `trendTitle` 없음. **백엔드 컬럼 제거 또는 null 허용 요청함** (DB `trend_title`은 현재 `NOT NULL` + 빈 문자열 금지) | `src/pages/report/ReportPage.jsx` `TREND_CARD_TITLE`                                                              |
+| 약관 동의 (구 확인 필요 5)    | **화면 표시용, 저장 안 함**. 온보딩 완료 요청에 `agreements`를 보내지 않음 (DB `children`에도 동의 컬럼 없음)                                                                   | `src/api/onboarding.js`, `src/pages/onboarding/DonePage.jsx`                                                      |
 
 ## 6. 확인 필요
 
@@ -322,7 +322,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 | 2   | 일기 저장 구조 / 하루 1개   | 단계별 함수 + 하루 여러 개              | DB: 1회 트랜잭션 저장, `UNIQUE(child_id, diary_date)` / spec: 초안·단계별 저장, days에 여러 개 | A안(최종 1회 저장) 추천. 하루 1개면 홈에서 "오늘 이미 작성" 처리 필요                                  |
 | 3   | ~~나이 범위~~               | —                                       | —                                                                                              | **확정 (5. 확정 참고)**. 남은 것: 응답에 `ageRecordedAt` 포함 여부                                     |
 | 4   | 리포트 문구 필드            | `description`·`advice`·`interpretation` | DB `most/least_emotion_reason`·`parent_advice`·`trend_interpretation`                          | 응답 필드명 매핑 확정. E04 최다/최소 감정 설명을 AI 문구로 쓸지. (`trend_title`은 확정 — 5. 확정 참고) |
-| 5   | 약관 동의 저장              | 온보딩 완료 시 `agreements` 전송        | DB 컬럼 없음                                                                                   | 서버 저장 여부 결정                                                                                    |
+| 5   | ~~약관 동의 저장~~          | —                                       | —                                                                                              | **확정 (5. 확정 참고)** — 화면 표시용, 저장 안 함                                                      |
 | 6   | 약관·구독·고객센터·버전     | API 함수로 mock 조회                    | DB 없음, 약관은 프론트 표시                                                                    | 정적 데이터로 프론트에 두고 API 제외 검토                                                              |
 | 7   | 기본 질문 문구              | 위 표의 3문장                           | AI 담당 "기본 질문 제공"                                                                       | 문구 통일                                                                                              |
 | 8   | 작성 방식 VOICE → TEXT 변경 | 프론트 상태만 변경                      | B안이면 변경 API 필요, A안이면 최종 저장 시 `inputType`만 보내면 됨                            | A안이면 별도 API 불필요                                                                                |

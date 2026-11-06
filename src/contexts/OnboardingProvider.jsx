@@ -9,7 +9,8 @@ const INITIAL = {
   age: AGE_DEFAULT,
 };
 
-// 온보딩 입력값(약관 동의·보조자·이름·나이) — 완료 시 한 번에 저장
+// 온보딩 입력값 — 보조자·이름·나이는 완료 시 한 번에 저장
+// 약관 동의(agreements)는 바텀시트 체크 상태 유지용(화면 표시용)으로만 들고, 저장하지 않는다
 function OnboardingProvider({ children }) {
   const [state, setState] = useState(INITIAL);
 
