@@ -43,6 +43,14 @@ src/
   2. npm run dev로 안 깨지는지 확인
 - 라우터, 레이아웃, 공통 컴포넌트(src/components) 수정할 땐 팀원에게 미리 말하기
 
+## 배포
+- Vercel 자동 배포: main push → Production, dev push → Preview
+- 배포는 dev → main 머지로만 (main 직접 커밋 금지)
+- vercel.json: SPA라서 모든 경로를 index.html로 rewrite (새로고침 404 방지)
+- VITE_ 환경변수는 빌드 시점에 들어가므로 Vercel에서 값을 바꾸면 Redeploy 필요
+- 백엔드 연결 시 백엔드 주소도 https여야 함 (https 페이지에서 http API 호출은 브라우저가 차단)
+- 배포 전 로컬 확인: npm run build → npm run preview
+
 ## 커밋 메시지
 - feat: 기능 추가
 - fix: 버그 수정
