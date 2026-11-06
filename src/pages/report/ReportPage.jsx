@@ -67,15 +67,28 @@ function summarize(distribution, total) {
       .map((d) => getEmotion(d.emotion).label)
       .join("·");
   const ratioOf = (count) => fmtRatio((count / total) * 100);
-  const minMany = recorded.filter((d) => d.count === min).length > 1;
+  const many = (count) => recorded.filter((d) => d.count === count).length > 1;
+  const countText = (count) =>
+    `${many(count) ? "각각 " : `전체 ${total}개 중 `}${count}개 (${ratioOf(count)})로 기록됐어요.`;
+
+  // 기록한 감정 수가 모두 같으면 최다·최소를 나누지 않고 카드 하나로
+  if (max === min && recorded.length > 1) {
+    return {
+      most: {
+        title: `비슷하게 느낀 감정 - ${names(max)}`,
+        text: countText(max),
+      },
+      least: null,
+    };
+  }
   return {
     most: {
       title: `가장 자주 느낀 감정 - ${names(max)}`,
-      text: `전체 ${total}개 중 ${max}개 (${ratioOf(max)})로 기록됐어요.`,
+      text: countText(max),
     },
     least: {
       title: `가장 적게 느낀 감정 - ${names(min)}`,
-      text: `${minMany ? "각각 " : `전체 ${total}개 중 `}${min}개 (${ratioOf(min)})로 기록됐어요.`,
+      text: countText(min),
     },
   };
 }
@@ -142,9 +155,11 @@ function ReportPage() {
                   <InsightCard title={summary.most.title}>
                     {summary.most.text}
                   </InsightCard>
-                  <InsightCard title={summary.least.title}>
-                    {summary.least.text}
-                  </InsightCard>
+                  {summary.least && (
+                    <InsightCard title={summary.least.title}>
+                      {summary.least.text}
+                    </InsightCard>
+                  )}
                 </>
               ) : (
                 <p className="py-5 text-center text-body font-medium">

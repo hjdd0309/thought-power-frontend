@@ -1,7 +1,7 @@
 import { mockResponse } from "@/api/mock";
 import { EMOTIONS } from "@/constants/emotions";
 import { mockDiaries, removeMockDiary } from "@/mocks/diaries";
-import { EMPTY_REPORT_TEXT, MOCK_REPORT_TEXT } from "@/mocks/report";
+import { buildReportText } from "@/mocks/report";
 import { parseISODate, toISODate } from "@/utils/date";
 
 // TODO: 백엔드 연결 시 프-백 API 명세 확정 후 각 함수를 client 호출로 교체
@@ -68,6 +68,7 @@ export async function getEmotionReport(startDate, endDate) {
     totalDiaryCount: total,
     distribution,
     days,
-    ...(total ? MOCK_REPORT_TEXT : EMPTY_REPORT_TEXT),
+    // mock: AI 문구를 집계 결과로 만든다 (실서버에서는 BE2가 AI 응답을 합쳐서 반환)
+    ...buildReportText(distribution, days),
   });
 }
