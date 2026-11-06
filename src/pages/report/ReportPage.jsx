@@ -16,6 +16,9 @@ const TABS = [
   { key: "trend", label: "변화 추이" },
 ];
 
+// E05 변화 추이 카드 제목 — 프론트 고정 문구로 확정 (API 응답에 trendTitle 없음)
+const TREND_CARD_TITLE = "다양한 마음을 기록했어요";
+
 function ReportTabs({ tab, onChange }) {
   return (
     <div className="relative mt-5.75 flex h-12 rounded-2xl bg-border-neutral">
@@ -194,9 +197,8 @@ function ReportPage() {
                 </div>
               ))}
             </div>
-            {/* TODO: 카드 제목에 해당하는 필드가 API 명세에 없음 (DB에는 trend_title) — 백엔드와 확정 */}
             <section className="mt-8.25 min-h-37.25 rounded-card bg-yellow-light px-6 pt-4 pb-6">
-              <p className="text-body font-bold">다양한 마음을 기록했어요</p>
+              <p className="text-body font-bold">{TREND_CARD_TITLE}</p>
               <p className="mt-3.5 text-body-sm font-medium text-muted">
                 {report.interpretation}
               </p>
