@@ -25,6 +25,10 @@
 - [ ] (담당: 프론트) Vercel 환경변수 `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=백엔드 https 주소` → Redeploy
 - [ ] (대기: 백엔드) 백엔드 CORS에 Vercel 도메인 추가 요청
 - [ ] (담당: 프론트·백) 저장 실패·하루 1개 에러(`DIARY_ALREADY_EXISTS`) 실제 응답 형식 확인
+- [ ] (담당: 프론트) 일기 저장(`saveDiary`) 요청에서 `date` 빼기 — 노션 명세상 서버가 Asia/Seoul 기준으로 저장 날짜를 정함. 응답 `201 { diaryId, date, completed }`의 `date`를 사용
+- [ ] (담당: 프론트) 리포트(`getEmotionReport`)는 mock 부분만 `client.get('/api/reports/emotions', { params: { startDate, endDate } })`로 교체. `mapReportResponse`는 그대로 사용하고, 문구 4개가 실제로 snake_case로 오는지 확인
+- [ ] (담당: 프론트) E04 최다·최소 카드 문구 확인 — AI-백 연동 전에는 백엔드 기본 문구가 나오고, 연동 후 실제 AI 문장이 나오는지 확인
+- [ ] (담당: 프론트) 오류 응답 형식 `{ code, message }` 확인 — 409 `DIARY_ALREADY_EXISTS`, 404 `PROFILE_NOT_FOUND`(아이 프로필 미등록) 처리
 
 ## 시연 준비
 
