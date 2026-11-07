@@ -56,42 +56,33 @@ function InsightCard({ title, children, highlight = false }) {
   );
 }
 
-const fmtRatio = (r) => `${Math.round(r * 10) / 10}%`;
+const labelOf = (codes) => codes.map((c) => getEmotion(c).label).join("·");
+const sameEmotions = (a, b) =>
+  a.length === b.length && a.every((c) => b.includes(c));
 
-// 가장 자주 / 가장 적게 느낀 감정 (기록 1개 이상 중)
-function summarize(distribution, total) {
-  const recorded = distribution.filter((d) => d.count > 0);
-  if (!recorded.length) return null;
-  const max = Math.max(...recorded.map((d) => d.count));
-  const min = Math.min(...recorded.map((d) => d.count));
-  const names = (count) =>
-    recorded
-      .filter((d) => d.count === count)
-      .map((d) => getEmotion(d.emotion).label)
-      .join("·");
-  const ratioOf = (count) => fmtRatio((count / total) * 100);
-  const many = (count) => recorded.filter((d) => d.count === count).length > 1;
-  const countText = (count) =>
-    `${many(count) ? "각각 " : `전체 ${total}개 중 `}${count}개 (${ratioOf(count)})로 기록됐어요.`;
+// 가장 자주 / 가장 적게 느낀 감정 — AI 설명 문구(mostEmotionReason·leastEmotionReason) 사용 (RP-05)
+function summarize(report) {
+  const { mostFrequentEmotions = [], leastFrequentEmotions = [] } = report;
+  if (!mostFrequentEmotions.length) return null; // 일기 0건
 
-  // 기록한 감정 수가 모두 같으면 최다·최소를 나누지 않고 카드 하나로
-  if (max === min && recorded.length > 1) {
+  // 모든 감정이 동률이면 최다·최소를 나누지 않고 카드 하나로
+  if (sameEmotions(mostFrequentEmotions, leastFrequentEmotions)) {
     return {
       most: {
-        title: `비슷하게 느낀 감정 - ${names(max)}`,
-        text: countText(max),
+        title: `비슷하게 느낀 감정 - ${labelOf(mostFrequentEmotions)}`,
+        text: report.mostEmotionReason,
       },
       least: null,
     };
   }
   return {
     most: {
-      title: `가장 자주 느낀 감정 - ${names(max)}`,
-      text: countText(max),
+      title: `가장 자주 느낀 감정 - ${labelOf(mostFrequentEmotions)}`,
+      text: report.mostEmotionReason,
     },
     least: {
-      title: `가장 적게 느낀 감정 - ${names(min)}`,
-      text: countText(min),
+      title: `가장 적게 느낀 감정 - ${labelOf(leastFrequentEmotions)}`,
+      text: report.leastEmotionReason,
     },
   };
 }
@@ -112,7 +103,7 @@ function ReportPage() {
   } = useRequest(() => getEmotionReport(start, end), [start, end]);
 
   const total = report?.totalDiaryCount ?? 0;
-  const summary = report && summarize(report.distribution, total);
+  const summary = report && summarize(report);
 
   return (
     <>
