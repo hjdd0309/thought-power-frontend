@@ -166,11 +166,11 @@ function ReportPage() {
                 </>
               ) : (
                 <p className="py-5 text-center text-body font-medium">
-                  {report.description}
+                  {report.mostEmotionReason}
                 </p>
               )}
               <InsightCard title="오늘의 한 줄 조언" highlight>
-                {report.advice}
+                {report.parentAdvice}
               </InsightCard>
             </div>
           </>
@@ -200,7 +200,7 @@ function ReportPage() {
             <section className="mt-8.25 min-h-37.25 rounded-card bg-yellow-light px-6 pt-4 pb-6">
               <p className="text-body font-bold">{TREND_CARD_TITLE}</p>
               <p className="mt-3.5 text-body-sm font-medium text-muted">
-                {report.interpretation}
+                {report.trendInterpretation}
               </p>
             </section>
           </>

@@ -4,17 +4,18 @@
 
 ## 다음에 바로 할 일 (프론트)
 
-- [ ] (담당: 프론트) 리포트 응답 필드명 DB 기준으로 변경
+- [x] (담당: 프론트) 리포트 응답 필드명 DB 기준으로 변경
   - `../thought-power-backend` 스키마의 `emotion_report` 컬럼을 읽고 camelCase로 매핑 (`mostEmotionReason`, `leastEmotionReason`, `parentAdvice` 등)
   - 응답 → 화면 객체 변환 함수를 `src/api` 리포트 함수 안에 하나로 모으기
   - `trend_title`은 고정 문구라 미사용
   - 매핑 안 되는 필드는 임의로 만들지 말 것
-- [ ] (담당: 프론트) 브라우저에서 직접 전체 플로우 클릭 확인 — 이번 세 커밋: SHAME 통일, 완료 시 한 번 저장, 하루 1개 제한
-- [ ] (담당: 프론트) Vercel 최신 배포 반영 확인, `/archive/3` 직접 접속·새로고침 시 404 없는지 확인
+- [x] (담당: 프론트) 브라우저에서 직접 전체 플로우 클릭 확인 — 이번 세 커밋: SHAME 통일, 완료 시 한 번 저장, 하루 1개 제한
+- [x] (담당: 프론트) Vercel 최신 배포 반영 확인, `/archive/3` 직접 접속·새로고침 시 404 없는지 확인
 
 ## 팀 답변 대기
 
-- [ ] (대기: BE2 권원민) 리포트 응답 키가 camelCase인지, 변화 추이 해석(`interpretation`)은 어떤 필드로 오는지, `trend_title` 컬럼 제거 또는 null 허용
+- [x] (대기: BE2 권원민) 리포트 응답 키가 camelCase인지, 변화 추이 해석(`interpretation`)은 어떤 필드로 오는지, `trend_title` 컬럼 제거 또는 null 허용
+  - 답변: 리포트 문구는 DB 컬럼 기준 snake_case로 내려옴(`most_emotion_reason`·`least_emotion_reason`·`parent_advice`·`trend_interpretation`). `trend_title`은 DB에서 컬럼 삭제로 확정
 - [ ] (대기: BE1 이소래) 일기 날짜를 프론트가 보낼지, 서버가 Asia/Seoul 기준으로 정할지
 - [ ] (대기: 전체) Chrome 음성 인식이 음성을 Google로 보내는 점, 개인정보 문구 반영 여부
 

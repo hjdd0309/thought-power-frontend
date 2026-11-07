@@ -40,9 +40,41 @@ export async function deleteDiary(diaryId) {
 const round2 = (n) => Math.round(n * 100) / 100;
 
 /**
- * 감정 리포트 — GET /api/reports/emotions 응답 형식 (docs/spec.md BE2 ↔ AI 리포트 연동)
+ * 원시 응답(days[].diaries + 문구 4개 snake_case) → 화면에서 쓰는 객체(days[].emotions + camelCase 문구)로 변환.
+ * 날짜는 새로 만들지 않고 원본 days의 날짜를 그대로 쓴다. legend는 화면에서 안 써서 매핑하지 않는다.
+ * 실제 API 연동 때도 이 함수 하나로 변환한다.
+ */
+function mapReportResponse(raw) {
+  const {
+    most_emotion_reason,
+    least_emotion_reason,
+    parent_advice,
+    trend_interpretation,
+    days,
+    legend: _legend,
+    ...rest
+  } = raw;
+
+  return {
+    ...rest,
+    days: days.map(({ date, diaries }) => ({
+      date,
+      emotions: diaries.map((d) => d.emotion),
+    })),
+    mostEmotionReason: most_emotion_reason,
+    leastEmotionReason: least_emotion_reason,
+    parentAdvice: parent_advice,
+    trendInterpretation: trend_interpretation,
+  };
+}
+
+/**
+ * 감정 리포트 — GET /api/reports/emotions 응답 형식 (노션 API 명세 기준)
  * { startDate, endDate, totalDiaryCount, distribution[{emotion,count,ratio}],
- *   days[{date,emotions[]}], description, advice, interpretation }
+ *   mostFrequentEmotions[], leastFrequentEmotions[](0건 감정 포함),
+ *   most_emotion_reason, least_emotion_reason, parent_advice (snake_case),
+ *   days[{date, diaries[{diaryId,emotion}]}](기간 내 모든 날짜),
+ *   legend({JOY:"기쁨", ...}), trend_interpretation (snake_case) }
  */
 export async function getEmotionReport(startDate, endDate) {
   const inRange = mockDiaries
@@ -59,6 +91,15 @@ export async function getEmotionReport(startDate, endDate) {
     };
   });
 
+  const max = total ? Math.max(...distribution.map((d) => d.count)) : 0;
+  const min = total ? Math.min(...distribution.map((d) => d.count)) : 0;
+  const mostFrequentEmotions = total
+    ? distribution.filter((d) => d.count === max).map((d) => d.emotion)
+    : [];
+  const leastFrequentEmotions = total
+    ? distribution.filter((d) => d.count === min).map((d) => d.emotion)
+    : [];
+
   const days = [];
   for (
     let d = parseISODate(startDate);
@@ -68,17 +109,35 @@ export async function getEmotionReport(startDate, endDate) {
     const date = toISODate(d);
     days.push({
       date,
-      emotions: inRange.filter((x) => x.date === date).map((x) => x.emotion),
+      diaries: inRange
+        .filter((x) => x.date === date)
+        .map(({ diaryId, emotion }) => ({ diaryId, emotion })),
     });
   }
 
-  return mockResponse({
+  const recorded = days.flatMap((d) => d.diaries.map((x) => x.emotion));
+
+  const legend = Object.fromEntries(
+    EMOTIONS.map(({ code, label }) => [code, label]),
+  );
+
+  const raw = {
     startDate,
     endDate,
     totalDiaryCount: total,
     distribution,
-    days,
+    mostFrequentEmotions,
+    leastFrequentEmotions,
     // mock: AI 문구를 집계 결과로 만든다 (실서버에서는 BE2가 AI 응답을 합쳐서 반환)
-    ...buildReportText(distribution, days),
-  });
+    ...buildReportText(
+      distribution,
+      mostFrequentEmotions,
+      leastFrequentEmotions,
+      recorded,
+    ),
+    days,
+    legend,
+  };
+
+  return mockResponse(mapReportResponse(raw));
 }
