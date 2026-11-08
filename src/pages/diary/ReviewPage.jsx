@@ -17,12 +17,12 @@ import { toISODate } from "@/utils/date";
 function ReviewPage() {
   const navigate = useNavigate();
   const diary = useDiary();
+  // 확인 화면 표시용 날짜. 저장 날짜는 서버가 정하므로 요청에 보내지 않는다
   const date = toISODate();
   const submit = useSubmit(async () => {
     await saveDiary({
       emotion: diary.emotion,
       inputType: diary.inputType,
-      date,
       content: diary.content,
       questions: diary.answers.map(({ order, type, content, answer }) => ({
         order,
