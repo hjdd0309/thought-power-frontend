@@ -7,18 +7,18 @@
 
 ## 0. 공통 규칙
 
-| 항목         | 규칙                                                                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Base URL     | `VITE_API_BASE_URL` (배포 환경은 **https** 필수)                                                                                     |
-| 인증         | 없음. 서버가 기본 사용자(`child_id = 1`)로 고정                                                                                      |
-| Content-Type | `application/json; charset=utf-8`                                                                                                    |
-| 날짜         | `YYYY-MM-DD` 문자열 (예: `"2026-11-06"`). 일기 날짜(`diary_date`)는 완료 저장 때 프론트가 `date`로 보낸다 (**Asia/Seoul** 기준 오늘) |
-| 일시         | ISO 8601 UTC (예: `"2026-11-06T05:12:00Z"`) — 프론트는 현재 일시 필드를 쓰지 않음                                                    |
-| 감정 코드    | `JOY`(기쁨) · `SADNESS`(슬픔) · `ANGER`(화남) · `FEAR`(무서움) · `SURPRISE`(놀람) · `SHAME`(부끄러움) — 확정 (DB 시드와 동일)        |
-| 질문 타입    | `order` 1=`EMOTION`(감정 탐색), 2=`REASON`(이유 탐색), 3=`PERSPECTIVE`(관점 확장) — DB `QuestionStage`, `sequence`와 동일            |
-| 작성 방식    | `VOICE` · `TEXT` (DB `InputType`). TEXT 본문은 500자 이하                                                                            |
-| 보호자 유형  | `PARENT` · `SCHOOL_TEACHER` · `FACILITY_TEACHER` · `OTHER` (DB `GuardianType`)                                                       |
-| 필드 표기    | JSON은 camelCase                                                                                                                     |
+| 항목         | 규칙                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Base URL     | `VITE_API_BASE_URL` (배포 환경은 **https** 필수)                                                                                                             |
+| 인증         | 없음. 서버가 기본 사용자(`child_id = 1`)로 고정                                                                                                              |
+| Content-Type | `application/json; charset=utf-8`                                                                                                                            |
+| 날짜         | `YYYY-MM-DD` 문자열 (예: `"2026-11-06"`). 일기 날짜(`diary_date`)는 서버가 **Asia/Seoul** 기준 오늘로 정한다. 프론트는 보내지 않고 저장 응답의 `date`를 사용 |
+| 일시         | ISO 8601 UTC (예: `"2026-11-06T05:12:00Z"`) — 프론트는 현재 일시 필드를 쓰지 않음                                                                            |
+| 감정 코드    | `JOY`(기쁨) · `SADNESS`(슬픔) · `ANGER`(화남) · `FEAR`(무서움) · `SURPRISE`(놀람) · `SHAME`(부끄러움) — 확정 (DB 시드와 동일)                                |
+| 질문 타입    | `order` 1=`EMOTION`(감정 탐색), 2=`REASON`(이유 탐색), 3=`PERSPECTIVE`(관점 확장) — DB `QuestionStage`, `sequence`와 동일                                    |
+| 작성 방식    | `VOICE` · `TEXT` (DB `InputType`). TEXT 본문은 500자 이하                                                                                                    |
+| 보호자 유형  | `PARENT` · `SCHOOL_TEACHER` · `FACILITY_TEACHER` · `OTHER` (DB `GuardianType`)                                                                               |
+| 필드 표기    | JSON은 camelCase                                                                                                                                             |
 
 ### 에러 응답 (제안)
 
@@ -113,7 +113,6 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 {
   "emotion": "SADNESS",
   "inputType": "VOICE",
-  "date": "2026-11-06",
   "content": "오늘 친구랑 놀다가 조금 속상한 일이 있었어요.",
   "questions": [
     { "order": 1, "type": "EMOTION", "content": "그때 어떤 기분이 들었나요?", "answer": "속상했어요." },
@@ -122,11 +121,11 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
   ]
 }
 // 응답 201
-{ "diaryId": 102, "date": "2026-11-06" }
+{ "diaryId": 102, "date": "2026-11-06", "completed": true }
 ```
 
 - `inputType`: 최종 작성 방식. 말로 쓰다 글로 쓰기로 바꾼 경우 `TEXT`
-- `date`: 작성한 날(오늘, Asia/Seoul 기준) `YYYY-MM-DD`
+- `date`: 요청에 보내지 않음. 서버가 Asia/Seoul 기준 오늘로 정해 응답의 `date`(`YYYY-MM-DD`)로 돌려주고, 프론트는 이 값을 사용
 - `questions`: 화면에 보여준 질문(`content`)과 사용자가 수정·확인한 답변(`answer`) 3쌍
 - 음성 인식 결과 수정은 클라이언트에서만 하고, 최종 텍스트를 저장 (스키마 주석과 일치)
 - 하루 1개 제약(`UNIQUE(child_id, diary_date)`) → 같은 날 두 번째 저장 시 409 `DIARY_ALREADY_EXISTS` → 프론트는 "오늘은 이미 일기를 썼어요" 안내 + 보관함에서 보기 (5. 확정 참고)
