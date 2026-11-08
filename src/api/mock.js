@@ -21,6 +21,17 @@ export const isDiaryAlreadyExists = (error) =>
   error?.code === DIARY_ALREADY_EXISTS ||
   error?.response?.data?.code === DIARY_ALREADY_EXISTS;
 
+// 아이 프로필 미등록 — 서버 404 응답 code
+export const PROFILE_NOT_FOUND = "PROFILE_NOT_FOUND";
+
+/**
+ * 프로필이 없다는 에러인지 (mock ApiError · 실서버 axios 404 응답 모두)
+ * TODO: 백엔드 연결 시 404 PROFILE_NOT_FOUND → '프로필을 먼저 등록해 주세요' 안내 후 /start 이동
+ */
+export const isProfileNotFound = (error) =>
+  error?.code === PROFILE_NOT_FOUND ||
+  error?.response?.data?.code === PROFILE_NOT_FOUND;
+
 /** mock 실패 응답 — 실제 API 에러처럼 비동기로 reject */
 export function mockError(code, message, delay = MOCK_DELAY_MS) {
   return new Promise((_, reject) => {
