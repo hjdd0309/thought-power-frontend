@@ -4,7 +4,14 @@ import { formatKoreanDate } from "@/utils/date";
 
 // 일기 전체 내용 (C13 전체 기록 확인 · E02 일기 상세 공통)
 // 오늘의 일기(#FFF7C4 카드) + 질문과 나의 답 1~3
-function DiarySummary({ emotion, date, content, questions = [] }) {
+// emptyAnswerText: 답변이 비어 있을 때 대신 보여줄 회색 문구 (없으면 기존처럼 빈칸)
+function DiarySummary({
+  emotion,
+  date,
+  content,
+  questions = [],
+  emptyAnswerText,
+}) {
   const e = getEmotion(emotion);
 
   return (
@@ -32,9 +39,15 @@ function DiarySummary({ emotion, date, content, questions = [] }) {
             {getQuestionStep(q.order)?.label}
           </p>
           <p className="text-body leading-[1.45] font-bold">{q.content}</p>
-          <p className="text-body leading-[1.45] font-medium whitespace-pre-line">
-            {q.answer}
-          </p>
+          {!q.answer?.trim() && emptyAnswerText ? (
+            <p className="text-body leading-[1.45] font-medium text-muted">
+              {emptyAnswerText}
+            </p>
+          ) : (
+            <p className="text-body leading-[1.45] font-medium whitespace-pre-line">
+              {q.answer}
+            </p>
+          )}
         </section>
       ))}
     </div>

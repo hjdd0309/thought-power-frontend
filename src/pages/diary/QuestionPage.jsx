@@ -1,23 +1,40 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { getQuestion } from "@/api/diary";
+import { QUESTION_FLOW_ACTIONS } from "@/api/questionFlow";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
+import ErrorRetry from "@/components/ErrorRetry";
+import LoadingState from "@/components/LoadingState";
 import ProgressBar from "@/components/ProgressBar";
 import TopBar from "@/components/TopBar";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import {
   INPUT_TYPES,
   QUESTION_COUNT,
-  getDefaultQuestion,
   getQuestionStep,
 } from "@/constants/diary";
 import { useDiary } from "@/contexts/diary";
+import useQuestionFlow from "@/hooks/useQuestionFlow";
 import useVoiceRecorder from "@/hooks/useVoiceRecorder";
 import { MOCK_TRANSCRIPTS } from "@/mocks/questions";
 import TranscriptConfirm from "@/pages/diary/TranscriptConfirm";
 import VoiceActions from "@/pages/diary/VoiceActions";
-import LoadingState from "@/components/LoadingState";
+
+const EMPTY_HINT = "생각이 안 나면 비워 둬도 괜찮아요";
+const SUBMIT_ERROR = "답변을 보내지 못했어요. 다시 눌러 주세요.";
+
+// 질문 흐름 안내(예: 만료로 처음부터 다시 시작) — 질문 카드 위 한 줄
+function FlowNotice({ message }) {
+  if (!message) return null;
+  return (
+    <p
+      role="status"
+      className="mb-3 text-center text-body-sm font-medium text-muted"
+    >
+      {message}
+    </p>
+  );
+}
 
 // 질문 카드 상단: 질문 유형 + 질문 문구
 function QuestionHeading({ label, content, top = "pt-7.75" }) {
@@ -25,7 +42,7 @@ function QuestionHeading({ label, content, top = "pt-7.75" }) {
     <div className={`px-5.75 ${top}`}>
       <p className="text-body-sm font-medium text-muted">{label}</p>
       <h1 className="mt-8 min-h-15.5 text-headline font-bold break-keep">
-        {content ?? "질문을 불러오고 있어요…"}
+        {content}
       </h1>
     </div>
   );
@@ -33,23 +50,25 @@ function QuestionHeading({ label, content, top = "pt-7.75" }) {
 
 // 말로 답하기: 녹음 전(C04/C07/C10) → 녹음 중(C05/C08/C11) → 수정·확인(C06/C09/C12)
 function VoiceAnswer({
-  order,
-  step,
   question,
+  step,
   initial,
+  notice,
+  error,
   onSubmit,
   onSwitchToText,
 }) {
+  const { order } = question;
   const recorder = useVoiceRecorder({
     mockTranscript: MOCK_TRANSCRIPTS[order],
   });
   const [draft, setDraft] = useState(initial ?? null);
 
-  // 정지 시 최종 인식 텍스트를 수정·확인(C06/C09/C12)으로 넘긴다. 비어 있으면 안내만 표시
+  // 정지 시 인식 텍스트를 수정·확인(C06/C09/C12)으로 넘긴다. 비어 있어도 확인 화면으로(빈 답변 허용)
   const toggle = async () => {
     if (recorder.isRecording) {
       const text = await recorder.stop();
-      if (text) setDraft(text);
+      setDraft(text ?? "");
     } else {
       recorder.start();
     }
@@ -69,6 +88,9 @@ function VoiceAnswer({
             recorder.reset();
           }}
           onConfirm={() => onSubmit(draft.trim())}
+          allowEmpty
+          hint={EMPTY_HINT}
+          error={error}
         />
       </>
     );
@@ -80,8 +102,9 @@ function VoiceAnswer({
         <ProgressBar current={order} total={QUESTION_COUNT} />
       </TopBar>
       <main className="px-5 pt-10.5">
+        <FlowNotice message={notice} />
         <section className="min-h-142 rounded-dialog border border-border-neutral bg-white pb-6">
-          <QuestionHeading label={step.label} content={question?.content} />
+          <QuestionHeading label={step.label} content={question.content} />
           <div className="mt-26.5">
             <VoiceRecorder recorder={recorder} onToggle={toggle} />
           </div>
@@ -91,7 +114,6 @@ function VoiceAnswer({
         recorder={recorder}
         onToggle={toggle}
         onSwitchToText={onSwitchToText}
-        disabled={!question}
       />
     </>
   );
@@ -103,8 +125,9 @@ const TEXT_PLACEHOLDER = {
   3: "내 생각을 적어보세요.",
 };
 
-// 질문 생성 대기 — 질문 카드 자리에서 캐릭터가 생각하는 연출
-function QuestionLoading({ order, step, inputType }) {
+// 질문 대기 — 질문 카드 자리에서 캐릭터가 생각하는 연출 (첫 질문 · 답변 전송 후 다음 질문)
+function QuestionLoading({ order, inputType }) {
+  const step = getQuestionStep(order);
   return (
     <>
       <TopBar>
@@ -117,7 +140,7 @@ function QuestionLoading({ order, step, inputType }) {
           }`}
         >
           <p className="px-5.75 pt-7.75 text-body-sm font-medium text-muted">
-            {step.label}
+            {step?.label}
           </p>
           <LoadingState
             className="my-auto"
@@ -140,8 +163,9 @@ function QuestionLoading({ order, step, inputType }) {
   );
 }
 
-// 글로 답하기: D03~D05 — 입력 후 바로 다음 질문으로
-function TextAnswer({ order, step, question, initial, onSubmit }) {
+// 글로 답하기: D03~D05 — 비어 있어도 다음으로 진행 가능
+function TextAnswer({ question, step, initial, notice, error, onSubmit }) {
+  const { order } = question;
   const [text, setText] = useState(initial ?? "");
   const isLast = order === QUESTION_COUNT;
 
@@ -150,11 +174,12 @@ function TextAnswer({ order, step, question, initial, onSubmit }) {
       <TopBar>
         <ProgressBar current={order} total={QUESTION_COUNT} />
       </TopBar>
-      <main className="flex flex-col gap-8 px-5 pt-10.75">
+      <main className="flex flex-col px-5 pt-10.75">
+        <FlowNotice message={notice} />
         <section className="h-51 rounded-dialog border border-border-neutral bg-white">
           <QuestionHeading
             label={step.label}
-            content={question?.content}
+            content={question.content}
             top="pt-7.25"
           />
         </section>
@@ -163,14 +188,13 @@ function TextAnswer({ order, step, question, initial, onSubmit }) {
           onChange={(e) => setText(e.target.value)}
           placeholder={TEXT_PLACEHOLDER[order]}
           aria-label="나의 답"
-          className="h-75 w-full resize-none rounded-bubble border border-border-neutral bg-white p-5 text-[20px] leading-[1.2] font-medium text-ink outline-none placeholder:text-muted focus:border-yellow"
+          className="mt-8 h-75 w-full resize-none rounded-bubble border border-border-neutral bg-white p-5 text-[20px] leading-[1.2] font-medium text-ink outline-none placeholder:text-muted focus:border-yellow"
         />
+        <p className="mt-3 text-body-sm font-medium text-muted">{EMPTY_HINT}</p>
       </main>
       <BottomAction>
-        <Button
-          disabled={!question || !text.trim()}
-          onClick={() => onSubmit(text.trim())}
-        >
+        {error && <ErrorRetry inline message={error} />}
+        <Button onClick={() => onSubmit(text.trim())}>
           {isLast ? "완료하기" : "다음으로"}
         </Button>
       </BottomAction>
@@ -178,87 +202,95 @@ function TextAnswer({ order, step, question, initial, onSubmit }) {
   );
 }
 
-// /diary/question/:order — 질문 1~3 (진행률 n/3)
-function QuestionPage({ order }) {
+// 첫 질문을 받지 못함 — 다시 시도
+function QuestionStartError({ onRetry }) {
+  return (
+    <>
+      <TopBar>
+        <ProgressBar current={1} total={QUESTION_COUNT} />
+      </TopBar>
+      <main className="px-5 pt-10.5">
+        <ErrorRetry
+          message={"질문을 불러오지 못했어요.\n다시 시도해 주세요."}
+          onRetry={onRetry}
+        />
+      </main>
+    </>
+  );
+}
+
+// /diary/question/:order — 질문 1~3 (진행률 question.order / 3)
+// 화면은 URL 순서가 아니라 질문 흐름의 현재 question 데이터로 그린다.
+// URL은 현재 질문 순서를 따라가기만 하고(replace), 서버 흐름은 되돌릴 수 없으므로
+// 뒤로가기는 본문 작성 화면으로 돌아간다(본문을 다시 확인하면 흐름을 새로 시작)
+function QuestionRoute() {
+  const { order: orderParam } = useParams();
   const navigate = useNavigate();
-  const { emotion, inputType, content, answers, getQnA, setQnA, update } =
-    useDiary();
-  const step = getQuestionStep(order);
-  const qna = getQnA(order);
+  const { emotion, inputType, content, update } = useDiary();
+  const qf = useQuestionFlow();
+  const { flow } = qf;
 
-  // 질문이 아직 없으면 요청(저장 없음) — 실패하면 순서별 기본 질문으로 대체하고 그대로 진행
+  const ready = Boolean(emotion && inputType && content);
+  const needsStart = ready && !flow && !qf.pending && !qf.error;
+
+  // 흐름이 없으면 첫 질문 시작 (중복 호출은 useQuestionFlow가 막는다)
   useEffect(() => {
-    if (!step || qna?.content) return;
-    let ignore = false;
-    const previousAnswers = answers
-      .filter((a) => a.order < order && a.answer)
-      .map((a) => ({
-        order: a.order,
-        type: a.type,
-        question: a.content,
-        answer: a.answer,
-      }));
-    getQuestion({
-      emotion,
-      content,
-      order,
-      type: step.type,
-      previousAnswers,
-    })
-      .then((q) =>
-        q?.content
-          ? { order, type: step.type, content: q.content }
-          : getDefaultQuestion(order),
-      )
-      .catch(() => getDefaultQuestion(order))
-      .then((q) => {
-        if (!ignore) setQnA(q);
-      });
-    return () => {
-      ignore = true;
-    };
-    // 질문 요청은 order 기준으로 한 번만
+    if (needsStart) qf.start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order]);
+  }, [needsStart]);
 
-  // 답변은 Context에만 담고 다음 질문(또는 C13 전체 확인)으로 이동
-  const handleSubmit = (answer) => {
-    setQnA({ order, type: step.type, answer });
-    navigate(
-      order < QUESTION_COUNT ? `/diary/question/${order + 1}` : "/diary/review",
-    );
+  const handleSubmit = async (answer) => {
+    const res = await qf.submit(answer);
+    if (!res) return; // 실패: 같은 화면에서 다시 누르면 재시도
+    if (res.action === QUESTION_FLOW_ACTIONS.COMPLETE) {
+      navigate("/diary/review", { replace: true });
+    } else {
+      navigate(`/diary/question/${res.question.order}`, { replace: true });
+    }
   };
 
+  if (!emotion) return <Navigate to="/diary/emotion" replace />;
   if (!inputType || !content) return <Navigate to="/diary/write" replace />;
-  if (!step) return <Navigate to="/diary/question/1" replace />;
-  if (!qna?.content) {
-    return <QuestionLoading order={order} step={step} inputType={inputType} />;
+  if (flow?.completed) return <Navigate to="/diary/review" replace />;
+
+  const question = flow?.question;
+  if (!question) {
+    return qf.error ? (
+      <QuestionStartError onRetry={qf.start} />
+    ) : (
+      <QuestionLoading order={1} inputType={inputType} />
+    );
   }
 
+  const { order } = question;
+  if (Number(orderParam) !== order) {
+    return <Navigate to={`/diary/question/${order}`} replace />;
+  }
+  if (qf.pending) {
+    return <QuestionLoading order={order} inputType={inputType} />;
+  }
+
+  // RETRY(같은 order, 새 version)에도 녹음·입력 상태를 새로 시작
+  const key = `${order}-${flow.questionVersion}`;
   const props = {
-    order,
-    step,
-    question: qna,
-    initial: qna.answer,
+    question,
+    step: getQuestionStep(order),
+    initial: qf.error ? (qf.failedAnswer ?? undefined) : undefined,
+    notice: qf.notice,
+    error: qf.error ? SUBMIT_ERROR : null,
     onSubmit: handleSubmit,
   };
 
   return inputType === INPUT_TYPES.TEXT ? (
-    <TextAnswer {...props} />
+    <TextAnswer key={key} {...props} />
   ) : (
     <VoiceAnswer
+      key={key}
       {...props}
       // 글로 쓰기로 바꾸면 완료 저장 때 최종 작성 방식(TEXT)만 보낸다
       onSwitchToText={() => update({ inputType: INPUT_TYPES.TEXT })}
     />
   );
-}
-
-// order가 바뀌면 녹음·입력 상태를 새로 시작하도록 key로 분리
-function QuestionRoute() {
-  const { order } = useParams();
-  const n = Number(order);
-  return <QuestionPage key={n} order={n} />;
 }
 
 export default QuestionRoute;

@@ -1,7 +1,18 @@
 import { DEFAULT_QUESTIONS } from "@/constants/diary";
 
-// AI 질문 mock — 형식 {order, type, content} (docs/spec.md AI → BE1 응답 기준)
+// AI 질문 mock — 형식 {order, type, content} (question-flow 응답의 question 기준)
 export const MOCK_QUESTIONS = DEFAULT_QUESTIONS;
+
+// 빈 답변으로 RETRY될 때 보여줄 mock 질문 (같은 order, 더 쉬운 표현)
+export const MOCK_RETRY_QUESTIONS = [
+  { order: 1, type: "EMOTION", content: "그때 기분이 좋았나요, 속상했나요?" },
+  { order: 2, type: "REASON", content: "어떤 일 때문에 그런 기분이 들었나요?" },
+  {
+    order: 3,
+    type: "PERSPECTIVE",
+    content: "다른 사람이라면 어떻게 생각했을까요?",
+  },
+];
 
 // 음성 인식 결과 mock (C03·C06·C09·C12 텍스트 확인 화면 예시 문구)
 export const MOCK_TRANSCRIPTS = {

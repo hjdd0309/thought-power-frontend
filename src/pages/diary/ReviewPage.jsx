@@ -14,6 +14,7 @@ import { toISODate } from "@/utils/date";
 
 // C13 / D06 전체 기록 확인 — 감정·날짜·본문·질문 3개와 답변, 완료하기
 // 완료하기에서 작성 내용 전체를 한 번에 저장한다. 실패해도 DiaryContext는 그대로라 다시 누르면 재시도
+// questions는 질문 흐름 COMPLETE 응답의 questions 그대로 (flowId·questionVersion·date는 보내지 않음)
 function ReviewPage() {
   const navigate = useNavigate();
   const diary = useDiary();
@@ -39,8 +40,8 @@ function ReviewPage() {
     return <AlreadyWritten onLeave={diary.reset} />;
   }
 
-  const answered = diary.answers.filter((a) => a.answer);
-  if (answered.length < QUESTION_COUNT) {
+  // 질문 흐름이 COMPLETE된 경우에만 (빈 답변 "" 허용 — 개수만 확인)
+  if (!diary.flow?.completed || diary.answers.length < QUESTION_COUNT) {
     return <Navigate to="/diary/write" replace />;
   }
 
@@ -54,6 +55,7 @@ function ReviewPage() {
           date={date}
           content={diary.content}
           questions={diary.answers}
+          emptyAnswerText="답하지 않았어요"
         />
       </main>
       <BottomAction className="pt-6">

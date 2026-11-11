@@ -24,7 +24,12 @@
 
 - [ ] (담당: 프론트) `src/api` mock → 실제 client 호출로 교체 (`docs/api-frontend.md` 기준)
 - [ ] (담당: 프론트) Vercel 환경변수 `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=백엔드 https 주소` → Redeploy
-- [ ] (대기: 백엔드) 백엔드 CORS에 Vercel 도메인 추가 요청
+- [x] (대기: 백엔드) 백엔드 CORS에 Vercel 도메인 추가 요청 — **해결됨 (2026-11-11)**
+  - 처음엔 preflight에 `Access-Control-Allow-*` 헤더가 전혀 없었음(CORS 설정 미적용 + 등록값 끝 슬래시) → 백엔드 수정·재배포
+  - 재배포 후 확인: `http://localhost:5173`, `https://thought-power-frontend.vercel.app` 모두 preflight에 `Access-Control-Allow-Origin`(해당 Origin), `Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS`, `Allow-Headers: content-type` 응답. 실제 POST 응답에도 `Access-Control-Allow-Origin` 포함
+- [x] (담당: 프론트) 질문 생성을 question-flow API로 교체 (`src/api/questionFlow.js`, `useQuestionFlow`) — RETRY·빈 답변·410 재시작, COMPLETE의 `questions`로 저장
+- [x] (담당: 프론트) 일기 저장(`saveDiary`)은 `VITE_USE_MOCK=false`일 때 실제 `POST /api/diaries` 호출
+- [ ] (담당: 프론트) 실제 API로 질문 흐름 수동 테스트 (음성·텍스트: 시작 → 빈 답변 → RETRY → NEXT → COMPLETE → 저장)
 - [ ] (담당: 프론트·백) 저장 실패·하루 1개 에러(`DIARY_ALREADY_EXISTS`) 실제 응답 형식 확인
 - [x] (담당: 프론트) 일기 저장(`saveDiary`) 요청에서 `date` 빼기 — 노션 명세상 서버가 Asia/Seoul 기준으로 저장 날짜를 정함. 응답 `201 { diaryId, date, completed }`의 `date`를 사용
 - [ ] (담당: 프론트) 리포트(`getEmotionReport`)는 mock 부분만 `client.get('/api/reports/emotions', { params: { startDate, endDate } })`로 교체. `mapReportResponse`는 그대로 사용하고, 문구 4개가 실제로 snake_case로 오는지 확인

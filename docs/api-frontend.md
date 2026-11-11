@@ -67,42 +67,50 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 ## 2. 일기 작성 (B·C·D 화면)
 
 > **저장 방식 확정**: 작성 중 데이터(감정·작성 방식·본문·질문/답변)는 프론트 `DiaryContext`가 들고 있다가 **C13 / D06 완료하기에서 한 번에 저장**한다.
-> 단계별 저장(초안 생성·본문 저장·답변 저장)은 없다. 서버 호출은 **AI 질문 요청**(저장 없음)과 **완료 저장** 두 가지뿐이다. (DB 스키마 "일기 1개 + 질문 3개를 한 트랜잭션으로 저장"과 동일)
+> 단계별 저장(초안 생성·본문 저장·답변 저장)은 없다. 서버 호출은 **질문 흐름**(question-flow, 저장 없음)과 **완료 저장** 두 가지뿐이다. (DB 스키마 "일기 1개 + 질문 3개를 한 트랜잭션으로 저장"과 동일)
 >
 > - B04~B05 작성 방식 선택, C03 / D01 본문 확인, C06·C09·C12 / D03~D05 답변 확인은 모두 프론트 상태만 바꾸고 다음 화면으로 이동
 > - 말로 쓰기 → 글로 쓰기로 바꿔도 별도 요청 없음. 완료 저장 때 **최종 작성 방식**(`inputType`)만 보낸다
 > - 완료 저장 실패 시 `DiaryContext`를 그대로 유지하고 C13 전체 확인 화면에서 완료하기를 다시 눌러 재시도한다
 
-### `getQuestion` — AI 질문 요청 (저장 없음)
+### 질문 흐름 (question-flow) — `src/api/questionFlow.js`
 
-- **POST** `/api/diaries/questions` · 화면 **C04 / C07 / C10 / D03 / D04 / D05** 진입 시
+> 기존 단건 질문 API(`POST /api/diaries/questions`)는 작성 흐름에서 쓰지 않는다. 같은 작성 과정에서 두 방식을 섞지 않는다.
+
+**① 첫 질문 시작** — **POST** `/api/diaries/question-flows` · 본문 확인(C03 / D01) 직후
 
 ```json
-// 요청 — docs/spec.md "BE1 → AI 요청"과 같은 형식
-{
-  "emotion": "SADNESS",
-  "content": "오늘 친구랑 놀다가 조금 속상한 일이 있었어요.",
-  "order": 2,
-  "type": "REASON",
-  "previousAnswers": [
-    { "order": 1, "type": "EMOTION", "question": "그때 어떤 기분이 들었나요?", "answer": "속상했어요." }
-  ]
-}
+// 요청 — content는 사용자가 수정·확인한 일기 본문
+{ "emotion": "JOY", "content": "오늘 친구와 놀았다.", "order": 1, "type": "EMOTION", "previousAnswers": [] }
 // 응답 200
-{ "order": 2, "type": "REASON", "content": "왜 그런 기분이 들었다고 생각하나요?" }
+{
+  "flowId": "5a41befd-57e8-4c5c-a93a-0257208e01d8", "action": "QUESTION",
+  "questionVersion": 0, "retryCount": 0, "informative": null,
+  "question": { "order": 1, "type": "EMOTION", "content": "그때 어떤 기분이 들었나요?", "isFallback": true },
+  "questions": []
+}
 ```
 
-- `previousAnswers`: 질문 1은 `[]`, 질문 2는 1번, 질문 3은 1·2번 질문·답변 (사용자가 수정·확인한 최종 답변)
-- 서버는 질문을 저장하지 않는다. 화면에 보여준 질문 문구는 프론트가 들고 있다가 완료 저장 때 함께 보낸다
-- 프론트 처리: 대기 중 로딩 연출, 실패 시 아래 기본 질문으로 대체하고 진행
+**② 답변 제출** — **POST** `/api/diaries/question-flows/{flowId}/answers` · 화면 **C06·C09·C12 확인 / D03~D05 다음으로**
 
-| order | type        | 기본 질문 (프론트 `src/constants/diary.js`) |
-| ----- | ----------- | ------------------------------------------- |
-| 1     | EMOTION     | 그때 어떤 기분이 들었나요?                  |
-| 2     | REASON      | 왜 그런 기분이 들었다고 생각하나요?         |
-| 3     | PERSPECTIVE | 친구는 그때 어떤 기분이었을까요?            |
+```json
+{ "questionVersion": 0, "answer": "" }
+```
 
-- 기본 질문 문구는 AI 담당 기본 질문과 맞춰야 함 → 확인 필요 7
+| action   | 프론트 처리                                                             |
+| -------- | ----------------------------------------------------------------------- |
+| QUESTION | 첫 질문 표시                                                            |
+| RETRY    | 같은 order의 새 질문 표시 (진행률 그대로, 녹음·입력 상태 초기화)        |
+| NEXT     | 다음 질문 표시                                                          |
+| COMPLETE | `question`은 null. `questions`(3쌍)를 들고 C13 / D06 전체 확인으로 이동 |
+
+- 진행률: `question.order / 3`. 화면은 URL 순서가 아니라 현재 `question` 데이터로 그린다
+- `questionVersion`: 매 응답의 최신 값을 다음 제출에 사용 (NEXT에서도 증가)
+- 빈 답변 허용: `""` 그대로 전송. 화면에 "생각이 안 나면 비워 둬도 괜찮아요" 안내
+- 같은 flowId·version·답변 재전송은 서버가 기존 결과를 돌려준다. 프론트도 처리 중 중복 클릭을 막는다
+- **410 `QUESTION_FLOW_EXPIRED`** (서버 재시작 포함): 본문은 유지하고 같은 감정·본문으로 ①부터 다시 시작, "질문을 처음부터 다시 시작할게요" 안내
+- 서버 흐름은 되돌릴 수 없어서 질문 화면의 뒤로가기는 본문 작성 화면으로 돌아간다. 본문을 다시 확인하면 흐름을 새로 시작
+- 질문 생성 실패 시 서버가 기본 질문(`isFallback: true`)을 내려준다. 프론트 기본 질문(`DEFAULT_QUESTIONS`)은 mock에서만 사용
 
 ### `saveDiary` — 일기 완료 저장
 
@@ -126,7 +134,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 
 - `inputType`: 최종 작성 방식. 말로 쓰다 글로 쓰기로 바꾼 경우 `TEXT`
 - `date`: 요청에 보내지 않음. 서버가 Asia/Seoul 기준 오늘로 정해 응답의 `date`(`YYYY-MM-DD`)로 돌려주고, 프론트는 이 값을 사용
-- `questions`: 화면에 보여준 질문(`content`)과 사용자가 수정·확인한 답변(`answer`) 3쌍
+- `questions`: 질문 흐름 COMPLETE 응답의 `questions` 그대로 (질문 `content`, 답변 `answer`, 빈 답변 `""` 가능). `flowId`·`questionVersion`은 보내지 않음
 - 음성 인식 결과 수정은 클라이언트에서만 하고, 최종 텍스트를 저장 (스키마 주석과 일치)
 - 하루 1개 제약(`UNIQUE(child_id, diary_date)`) → 같은 날 두 번째 저장 시 409 `DIARY_ALREADY_EXISTS` → 프론트는 "오늘은 이미 일기를 썼어요" 안내 + 보관함에서 보기 (5. 확정 참고)
 

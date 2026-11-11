@@ -111,8 +111,9 @@ function WritePage() {
   const { inputType, content, update } = useDiary();
 
   // 본문은 Context에만 담고 바로 질문 1로 이동 (저장은 C13 완료 시 한 번에)
+  // 본문을 다시 확인하면 질문 흐름은 처음부터 새로 시작한다
   const handleSubmit = (value) => {
-    update({ content: value });
+    update({ content: value, flow: null, answers: [] });
     navigate("/diary/question/1");
   };
 
