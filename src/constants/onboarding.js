@@ -15,9 +15,17 @@ export const AGE_MIN = 6;
 export const AGE_MAX = 10;
 export const AGE_DEFAULT = 8;
 
-// 약관 동의 항목 (A03)
+// 약관 버전 — 온보딩 완료 요청의 agreements[].version (백엔드 OnboardingService 기준 "1.0")
+export const TERMS_VERSION = "1.0";
+
+// 약관 동의 항목 (A03) — type은 GET /api/terms·온보딩 요청의 약관 유형
+// label은 약관 조회 실패·로딩 중일 때 쓰는 기본 문구
 export const AGREEMENT_ITEMS = [
-  { key: "guardian", label: "만 14세 미만 보호자 동의 (필수)" },
-  { key: "terms", label: "서비스 이용약관 (필수)" },
-  { key: "privacy", label: "개인정보 처리방침 (필수)" },
+  {
+    key: "guardian",
+    type: "GUARDIAN",
+    label: "만 14세 미만 보호자 동의 (필수)",
+  },
+  { key: "terms", type: "SERVICE", label: "서비스 이용약관 (필수)" },
+  { key: "privacy", type: "PRIVACY", label: "개인정보 처리방침 (필수)" },
 ];

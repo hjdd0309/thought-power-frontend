@@ -24,8 +24,15 @@ function SupportPage() {
         <ul className="mt-9.5">
           {(items ?? []).map((item) => (
             <li key={item.key}>
-              {/* TODO: 자주 묻는 질문·문의하기 이동 화면/링크 확정 후 연결 */}
-              <SettingRow onClick={() => {}}>{item.label}</SettingRow>
+              {/* 문의하기는 서버 inquiryUrl이 있을 때만 새 창으로 연결
+                  TODO: 자주 묻는 질문 이동 화면 확정 후 연결 */}
+              <SettingRow
+                onClick={() => {
+                  if (item.url) window.open(item.url, "_blank", "noopener");
+                }}
+              >
+                {item.label}
+              </SettingRow>
             </li>
           ))}
         </ul>

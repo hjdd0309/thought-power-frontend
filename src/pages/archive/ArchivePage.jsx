@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMonthlyDiaries } from "@/api/archive";
+import { getDiariesByDate, getMonthlyDiaries } from "@/api/archive";
 import backIcon from "@/assets/icons/back.svg";
 import rightIcon from "@/assets/icons/right.svg";
 import Button from "@/components/Button";
@@ -66,10 +66,24 @@ function ArchivePage() {
       return { year: d.getFullYear(), month: d.getMonth() + 1 };
     });
 
-  const openDiary = (date) => {
+  // 실서버 달력 응답에는 diaryId가 없어 일기가 있는 날짜면 날짜별 조회로 id를 찾는다
+  const openDiary = async (date) => {
     const diary = diaryByDate[date];
+    if (!diary) {
+      navigate(`/archive/empty?date=${date}`);
+      return;
+    }
+    let { diaryId } = diary;
+    if (diaryId == null) {
+      try {
+        diaryId = (await getDiariesByDate(date))[0]?.diaryId;
+      } catch {
+        setError("일기를 불러오지 못했어요. 다시 눌러 주세요.");
+        return;
+      }
+    }
     navigate(
-      diary ? `/archive/${diary.diaryId}` : `/archive/empty?date=${date}`,
+      diaryId != null ? `/archive/${diaryId}` : `/archive/empty?date=${date}`,
     );
   };
 

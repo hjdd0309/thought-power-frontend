@@ -70,6 +70,7 @@ function DiaryDetailPage() {
             date={diary.date}
             content={diary.content}
             questions={diary.questions}
+            emptyAnswerText="답하지 않았어요"
           />
         )}
         {!detail.loading && !detail.error && !hasDiary && (

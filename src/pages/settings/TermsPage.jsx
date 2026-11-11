@@ -27,15 +27,20 @@ function TermsPage() {
       {terms && (
         <main className="flex flex-col px-5 pt-9 pb-12">
           <h1 className="text-headline font-bold">{terms.title}</h1>
-          <p className="mt-5.5 text-label font-medium text-muted">
-            {terms.notice}
-          </p>
+          {terms.notice && (
+            <p className="mt-5.5 text-label font-medium text-muted">
+              {terms.notice}
+            </p>
+          )}
+          {/* 실서버는 아직 약관 본문을 주지 않아 content가 비면 제목만 표시 */}
           {terms.articles.map((a) => (
             <section key={a.title} className="mt-5.5 flex flex-col gap-4">
               <h2 className="text-body font-bold">{a.title}</h2>
-              <p className="text-body-sm leading-[1.45] font-medium text-muted">
-                {a.content}
-              </p>
+              {a.content && (
+                <p className="text-body-sm leading-[1.45] font-medium text-muted">
+                  {a.content}
+                </p>
+              )}
             </section>
           ))}
         </main>

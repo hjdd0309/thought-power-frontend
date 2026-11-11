@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { isOnboarded } from "@/utils/storage";
+import { getOnboardingStatus } from "@/api/onboarding";
+import { isOnboarded, markOnboarded } from "@/utils/storage";
 
 const SPLASH_DURATION = 1500;
 
@@ -8,12 +9,21 @@ const SPLASH_DURATION = 1500;
 function SplashPage() {
   const navigate = useNavigate();
 
+  // 실서버면 사용자 조회(GET /api/users/me, 온보딩 전 404)로 판단하고,
+  // mock이거나 조회에 실패하면 이 기기의 localStorage 값으로 판단한다
   useEffect(() => {
-    const timer = setTimeout(
-      () => navigate(isOnboarded() ? "/home" : "/start", { replace: true }),
-      SPLASH_DURATION,
-    );
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    const status = getOnboardingStatus().catch(() => null);
+    const wait = new Promise((resolve) => setTimeout(resolve, SPLASH_DURATION));
+    Promise.all([status, wait]).then(([onboarded]) => {
+      if (cancelled) return;
+      if (onboarded) markOnboarded();
+      const done = onboarded ?? isOnboarded();
+      navigate(done ? "/home" : "/start", { replace: true });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   return (

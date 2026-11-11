@@ -22,7 +22,10 @@
 
 ## 백엔드 연결 (프론트·백·AI 같이)
 
-- [ ] (담당: 프론트) `src/api` mock → 실제 client 호출로 교체 (`docs/api-frontend.md` 기준)
+- [x] (담당: 프론트) `src/api` mock → 실제 client 호출로 교체 (`docs/api-frontend.md` "실서버 연결 현황" 기준) — 온보딩·보관함·리포트·설정 전부 `VITE_USE_MOCK=false`일 때 실서버. GET은 실서버로 확인, 쓰기 요청(삭제·온보딩·프로필 수정)은 요청 형태만 확인
+- [ ] (담당: 프론트) 브라우저에서 화면별 실서버 확인 — 쓰기 동작(일기 삭제·온보딩 완료·프로필 저장·일기 저장)은 팀 공용 데이터가 바뀌니 팀에 알리고 진행
+- [ ] (대기: 백엔드) 달력 응답에 `diaryId` 추가 요청(선택) · `/api/support`의 `fags` 오타 확인
+- [ ] (대기: 기획) 구독(`subscription: null`)·고객센터(`fags: []`, `inquiryUrl: null`)는 실데이터가 없음 → 무료 플랜 기본 문구 / 문의 URL 생기면 연결
 - [ ] (담당: 프론트) Vercel 환경변수 `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=백엔드 https 주소` → Redeploy
 - [x] (대기: 백엔드) 백엔드 CORS에 Vercel 도메인 추가 요청 — **해결됨 (2026-11-11)**
   - 처음엔 preflight에 `Access-Control-Allow-*` 헤더가 전혀 없었음(CORS 설정 미적용 + 등록값 끝 슬래시) → 백엔드 수정·재배포
@@ -32,9 +35,10 @@
 - [ ] (담당: 프론트) 실제 API로 질문 흐름 수동 테스트 (음성·텍스트: 시작 → 빈 답변 → RETRY → NEXT → COMPLETE → 저장)
 - [ ] (담당: 프론트·백) 저장 실패·하루 1개 에러(`DIARY_ALREADY_EXISTS`) 실제 응답 형식 확인
 - [x] (담당: 프론트) 일기 저장(`saveDiary`) 요청에서 `date` 빼기 — 노션 명세상 서버가 Asia/Seoul 기준으로 저장 날짜를 정함. 응답 `201 { diaryId, date, completed }`의 `date`를 사용
-- [ ] (담당: 프론트) 리포트(`getEmotionReport`)는 mock 부분만 `client.get('/api/reports/emotions', { params: { startDate, endDate } })`로 교체. `mapReportResponse`는 그대로 사용하고, 문구 4개가 실제로 snake_case로 오는지 확인
+- [x] (담당: 프론트) 리포트(`getEmotionReport`)는 mock 부분만 `client.get('/api/reports/emotions', { params: { startDate, endDate } })`로 교체. `mapReportResponse`는 그대로 사용하고, 문구 4개가 실제로 snake_case로 오는지 확인 — 실서버 snake_case 확인 완료
 - [ ] (담당: 프론트) E04 최다·최소 카드 문구 확인 — AI-백 연동 전에는 백엔드 기본 문구가 나오고, 연동 후 실제 AI 문장이 나오는지 확인
 - [ ] (담당: 프론트) 오류 응답 형식 `{ code, message }` 확인 — 409 `DIARY_ALREADY_EXISTS`, 404 `PROFILE_NOT_FOUND`(아이 프로필 미등록) 처리
+  - 확인: 일기 저장·질문 흐름은 `{ code, message }`, `/api/users/me`·`/api/diaries/{id}` 404는 Spring 기본 형식(`{ timestamp, status, error, path }`) → 상태코드로 분기하도록 구현함
 
 ## 시연 준비
 
@@ -51,4 +55,4 @@
 
 ## 확정된 결정 (참고)
 
-나이 6~10세 / 보호자 유형 아동시설 선생님(`FACILITY_TEACHER`) / 감정 분석 막대 차트 / 변화 추이 제목 고정 문구 / 부끄러움 코드 `SHAME` / 약관 화면 표시용·저장 안 함 / 일기는 완료 시 한 번에 저장, 하루 1개
+나이 6~10세 / 보호자 유형 아동시설 선생님(`FACILITY_TEACHER`) / 감정 분석 막대 차트 / 변화 추이 제목 고정 문구 / 부끄러움 코드 `SHAME` / 온보딩 완료 시 동의값(agreements, version 1.0)을 함께 저장 / 일기는 완료 시 한 번에 저장, 하루 1개

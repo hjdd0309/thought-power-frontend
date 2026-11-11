@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getTerms } from "@/api/settings";
 import checkIcon from "@/assets/icons/check.svg";
 import BottomSheet from "@/components/BottomSheet";
 import Button from "@/components/Button";
 import { AGREEMENT_ITEMS } from "@/constants/onboarding";
 import { useOnboarding } from "@/contexts/onboarding";
+import useRequest from "@/hooks/useRequest";
 
 function AgreeRow({ checked, bold = false, onToggle, children }) {
   return (
@@ -45,6 +47,12 @@ function StartPage() {
   const navigate = useNavigate();
   const { agreements, update } = useOnboarding();
   const [checked, setChecked] = useState(agreements);
+  // 약관 항목 라벨은 설정과 같은 약관 조회 API를 재사용. 로딩·실패 시 기본 라벨로 표시
+  const { data: terms } = useRequest(() => getTerms(), []);
+  const items = AGREEMENT_ITEMS.map((item) => ({
+    ...item,
+    label: terms?.items?.find((t) => t.type === item.type)?.label ?? item.label,
+  }));
 
   const allChecked = AGREEMENT_ITEMS.every(({ key }) => checked[key]);
 
@@ -83,7 +91,7 @@ function StartPage() {
           </Button>
         </div>
         <div className="mt-6.5 flex flex-col gap-1.5">
-          {AGREEMENT_ITEMS.map(({ key, label }) => (
+          {items.map(({ key, label }) => (
             <AgreeRow
               key={key}
               checked={checked[key]}

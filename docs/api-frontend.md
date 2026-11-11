@@ -5,6 +5,37 @@
 
 ---
 
+## ★ 실서버 연결 현황 (2026-11-11, OpenAPI `https://k1min.site/v3/api-docs` + 실서버 GET 확인)
+
+> 아래 표가 실제 서버 기준이다. 이후 섹션(1~6)은 연결 전 초안이라 경로·필드가 다를 수 있으며, 다르면 이 표를 따른다.
+> 모든 `src/api/*.js` 함수는 `VITE_USE_MOCK=false`일 때만 실서버를 호출하고, 응답 → 화면 형식 변환은 API 모듈 안에서 한다.
+
+| 프론트 함수           | 실서버 API                                                                                                                                | 응답 → 화면 변환                                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `completeOnboarding`  | **POST** `/api/users/me/onboarding` `{ name, age, helperType, agreements:[{type, version, agreed}] }` → `{ userId, onboardingCompleted }` | `guardianType` → `helperType`. 동의값은 약관 3종(`GUARDIAN`·`SERVICE`·`PRIVACY`) 모두 필수, `version`은 `"1.0"`(프론트 상수 `TERMS_VERSION`) |
+| `getOnboardingStatus` | **GET** `/api/users/me`                                                                                                                   | 200 → 온보딩 완료, **404 → 미완료**. 스플래시가 이 값으로 `/home`·`/start` 분기 (실패 시 localStorage)                                       |
+| `getProfile`          | **GET** `/api/users/me` → `{ userId, name, age, helperType }`                                                                             | `helperType` → `guardianType`                                                                                                                |
+| `updateProfile`       | **PATCH** `/api/users/me` `{ name, age, helperType }`                                                                                     | 응답을 `getProfile`과 같은 형식으로                                                                                                          |
+| `getSubscription`     | **GET** `/api/subscription` → `{ subscription: null }`                                                                                    | 결제 기능이 없어 null → 무료 플랜 기본 3줄                                                                                                   |
+| `getTerms`            | **GET** `/api/terms` → `{ terms:[{ type, title, required }] }`                                                                            | 설정 F06: 약관 제목만 표시(본문 없음). 온보딩 A03: 동의 항목 라벨로 재사용                                                                   |
+| `getSupportItems`     | **GET** `/api/support` → `{ fags: [], inquiryUrl: null }`                                                                                 | 두 줄 고정(자주 묻는 질문·문의하기), `inquiryUrl`이 있으면 문의하기를 새 창으로                                                              |
+| `getVersion`          | **GET** `/api/app/version` → `{ version, logoUrl }`                                                                                       | 그대로                                                                                                                                       |
+| `getMonthlyDiaries`   | **GET** `/api/diaries/calendar?year&month` → `{ year, month, days:[{ date, diaryCount, emotions[] }] }`                                   | `[{ date, emotion }]` — **diaryId 없음**                                                                                                     |
+| `getDiariesByDate`    | **GET** `/api/diaries?date=YYYY-MM-DD` → `{ diaries:[{ diaryId, date, emotion, contentPreview }] }`                                       | 배열만. 보관함에서 날짜를 두 번 누르면 이걸로 diaryId를 찾아 상세로 이동                                                                     |
+| `getTodayDiary`       | `getDiariesByDate(오늘)`                                                                                                                  | 첫 항목 또는 null (하루 1개 제한 확인, 저장 시 409 `DIARY_ALREADY_EXISTS`로 한 번 더 막힘)                                                   |
+| `getDiary`            | **GET** `/api/diaries/{diaryId}` → `{ diaryId, date, emotion, content, questions:[{ order, type, question, answer }] }`                   | `question` → `content`. **404 → null**(빈 안내). 빈 답변은 "답하지 않았어요"                                                                 |
+| `deleteDiary`         | **DELETE** `/api/diaries/{diaryId}` → 200                                                                                                 | 삭제 후 `/archive`로 이동하면 달력 다시 조회                                                                                                 |
+| `getEmotionReport`    | **GET** `/api/reports/emotions?startDate&endDate`                                                                                         | `mapReportResponse`: snake_case 문구 4종 → camelCase, `days[].diaries` → `days[].emotions`. 0건·AI 실패 시 서버 기본 문구 그대로 표시        |
+
+**실서버 에러 형식**: 일기 저장(`POST /api/diaries`)·질문 흐름은 `{ code, message }`. 그 밖의 404·400(`/api/users/me`, `/api/diaries/{id}` 등)은 Spring 기본 `{ timestamp, status, error, path }`라 **HTTP 상태코드로 분기**한다.
+
+**백엔드에 요청할 것 (명세 부족)**
+
+- `GET /api/diaries/calendar` 날짜 항목에 `diaryId` 추가하면 상세 이동 시 추가 조회가 필요 없음
+- `/api/support`의 `fags`는 `faqs` 오타로 보임 (프론트는 아직 미사용)
+
+---
+
 ## 0. 공통 규칙
 
 | 항목         | 규칙                                                                                                                                                         |
@@ -59,7 +90,7 @@ HTTP 상태코드 + 아래 본문. 프론트는 `message`를 그대로 보여주
 { "name": "지우", "age": 8, "guardianType": "PARENT", "completed": true }
 ```
 
-- 약관 동의값은 **화면 표시용, 저장 안 함** (확정 — 5. 확정 참고). 요청에 `agreements`를 보내지 않는다. 필수 동의 전에는 A03 완료 버튼이 비활성이라 프론트에서만 막는다
+- ~~약관 동의값은 화면 표시용, 저장 안 함~~ → **변경**: 실서버는 `agreements`(약관 3종 동의·버전)를 필수로 받는다. 맨 위 "실서버 연결 현황" 참고
 - 나이 범위 **6~10세 확정** (DB 제약과 동일). 프론트도 같은 범위만 보낸다
 
 ---
