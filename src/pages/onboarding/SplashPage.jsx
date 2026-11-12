@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getOnboardingStatus } from "@/api/onboarding";
-import { isOnboarded, markOnboarded } from "@/utils/storage";
+import { isOnboarded, markNotOnboarded, markOnboarded } from "@/utils/storage";
 
 const SPLASH_DURATION = 1500;
 
@@ -17,7 +17,10 @@ function SplashPage() {
     const wait = new Promise((resolve) => setTimeout(resolve, SPLASH_DURATION));
     Promise.all([status, wait]).then(([onboarded]) => {
       if (cancelled) return;
-      if (onboarded) markOnboarded();
+      // true/false는 서버 응답(false = 404)이라 로컬 플래그를 맞추고,
+      // null(mock·네트워크 오류)일 때만 로컬 플래그로 대체한다
+      if (onboarded === true) markOnboarded();
+      else if (onboarded === false) markNotOnboarded();
       const done = onboarded ?? isOnboarded();
       navigate(done ? "/home" : "/start", { replace: true });
     });

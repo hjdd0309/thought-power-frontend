@@ -23,6 +23,9 @@ export const isOnboarded = () => readStorage(ONBOARDED_KEY) === "true";
 
 export const markOnboarded = () => writeStorage(ONBOARDED_KEY, "true");
 
+// 서버가 온보딩 미완료라고 답하면 남아 있던 true 값을 덮어쓴다
+export const markNotOnboarded = () => writeStorage(ONBOARDED_KEY, "false");
+
 // 게스트 사용자 구분용 클라이언트 ID — 서버가 이 값으로 기기(브라우저)별 사용자를 구분한다
 export const CLIENT_ID_KEY = "thought-power:client-id";
 
