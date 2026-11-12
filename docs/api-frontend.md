@@ -50,6 +50,7 @@
 | 작성 방식    | `VOICE` · `TEXT` (DB `InputType`). TEXT 본문은 500자 이하                                                                                                    |
 | 보호자 유형  | `PARENT` · `SCHOOL_TEACHER` · `FACILITY_TEACHER` · `OTHER` (DB `GuardianType`)                                                                               |
 | 필드 표기    | JSON은 camelCase                                                                                                                                             |
+| 클라이언트 식별 | `X-Client-Id` 헤더 — 게스트(기기/브라우저) 구분용. `localStorage("thought-power:client-id")`에 저장된 UUID를 axios 요청 인터셉터(`src/api/client.js`)가 모든 요청에 자동 부착. 백엔드 CORS에 허용 헤더로 등록됨(2026-11-12) |
 
 ### 에러 응답 (제안)
 

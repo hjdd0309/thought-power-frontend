@@ -22,6 +22,8 @@
 
 ## 백엔드 연결 (프론트·백·AI 같이)
 
+- [x] (담당: 프론트) 게스트 사용자 구분용 `X-Client-Id` 헤더 추가 — `src/utils/storage.js` `getClientId()`(localStorage + 메모리 캐시, randomUUID 미지원 브라우저 대체 포함) + `src/api/client.js` 요청 인터셉터. 백엔드 CORS 허용 헤더 등록 확인됨(2026-11-12)
+
 - [x] (담당: 프론트) `src/api` mock → 실제 client 호출로 교체 (`docs/api-frontend.md` "실서버 연결 현황" 기준) — 온보딩·보관함·리포트·설정 전부 `VITE_USE_MOCK=false`일 때 실서버. GET은 실서버로 확인, 쓰기 요청(삭제·온보딩·프로필 수정)은 요청 형태만 확인
 - [ ] (담당: 프론트) 브라우저에서 화면별 실서버 확인 — 쓰기 동작(일기 삭제·온보딩 완료·프로필 저장·일기 저장)은 팀 공용 데이터가 바뀌니 팀에 알리고 진행
 - [ ] (대기: 백엔드) 달력 응답에 `diaryId` 추가 요청(선택) · `/api/support`의 `fags` 오타 확인
