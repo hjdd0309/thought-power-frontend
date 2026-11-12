@@ -2,7 +2,7 @@
 function TextField({ className = "", ...props }) {
   return (
     <input
-      className={`h-14.5 w-full rounded-button border border-border-neutral bg-white px-5.5 text-center text-body font-medium text-ink outline-none placeholder:text-ink focus:border-yellow ${className}`}
+      className={`h-14.5 w-full rounded-button border border-border-neutral bg-white px-5.5 text-center text-body font-medium text-ink outline-none placeholder:text-ink focus:border-yellow focus:placeholder:text-transparent ${className}`}
       {...props}
     />
   );
