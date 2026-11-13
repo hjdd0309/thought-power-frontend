@@ -1,8 +1,24 @@
 import { Link } from "react-router-dom";
 import settingIcon from "@/assets/icons/setting.svg";
 import Character from "@/components/Character";
+import useRequest from "@/hooks/useRequest";
+import { getDiaryStats } from "@/utils/diaryStats";
 
-// B01 홈 — 캐릭터·일기 작성 안내, 우측 상단 설정 이동
+// 캐릭터 아래 한 줄 — 연속 기록이 없으면 스티커 수만, 조회 중·실패면 숨김
+function DiaryStats() {
+  const { data } = useRequest(getDiaryStats);
+  if (!data) return <p className="mt-5 min-h-5" />;
+  const parts = [];
+  if (data.streak > 0) parts.push(`${data.streak}일째 일기 쓰는 중`);
+  parts.push(`이번 달 스티커 ${data.monthStickers}개`);
+  return (
+    <p className="mt-5 min-h-5 animate-fade-in-delayed text-center text-body-sm font-medium text-muted">
+      {parts.join(" · ")}
+    </p>
+  );
+}
+
+// B01 홈 — 캐릭터·일기 작성 안내·기록 현황, 우측 상단 설정 이동
 function HomePage() {
   return (
     <main className="flex flex-1 flex-col">
@@ -28,6 +44,7 @@ function HomePage() {
       </Link>
 
       <Character name="sit" className="mt-11.75 motion-safe:animate-float" />
+      <DiaryStats />
     </main>
   );
 }
