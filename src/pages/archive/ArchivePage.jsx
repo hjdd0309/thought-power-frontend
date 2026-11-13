@@ -149,7 +149,7 @@ function ArchivePage() {
           ))}
         </div>
         {weeks.map((week, wi) => (
-          <div key={wi} className="flex h-13 justify-between">
+          <div key={wi} className="flex h-13 items-start justify-between">
             {week.map((date, di) => {
               if (!date) return <span key={di} className="w-11.5" />;
               const day = Number(date.slice(8));
@@ -166,17 +166,17 @@ function ArchivePage() {
                     emotion ? ` ${emotion.label}` : ""
                   }`}
                   aria-pressed={Boolean(selected)}
-                  className={`relative flex h-13 w-11.5 flex-col items-center justify-center rounded-[22px] font-medium ${
-                    emotion ? "text-label" : "text-body-sm"
-                  } ${future ? "text-muted" : "text-ink"} ${
-                    selected ? "bg-yellow-light" : ""
-                  }`}
+                  className={`relative flex h-13 w-11.5 flex-col items-center justify-start rounded-[22px] pt-1 text-body-sm font-medium ${
+                    future ? "text-muted" : "text-ink"
+                  } ${selected ? "bg-yellow-light" : ""}`}
                 >
-                  {day}
-                  {/* 일기가 있는 날: 그날 감정 이모지를 작게 */}
-                  {emotion && (
-                    <EmotionCharacter emotion={emotion.code} size={26} />
-                  )}
+                  <span>{day}</span>
+                  {/* 이모지 자리는 항상 확보해 숫자 위치가 흔들리지 않게 하고, 일기가 있는 날만 그날 감정 이모지를 넣는다 */}
+                  <span className="flex size-7 items-center justify-center">
+                    {emotion && (
+                      <EmotionCharacter emotion={emotion.code} size={26} />
+                    )}
+                  </span>
                 </button>
               );
             })}
