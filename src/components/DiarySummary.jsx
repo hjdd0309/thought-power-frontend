@@ -29,12 +29,21 @@ function toManuscriptCells(text) {
   return cells;
 }
 
-// 노트 줄 — 질문·답변이 같은 줄 간격(2rem)·시작점·길이를 쓰고 색만 다르다
+// 노트 줄 — 질문·답변이 같은 줄 간격(2rem)·시작점·길이를 쓴다
+// 답변: 반듯한 직선 / 질문: 같은 자리에 연한 빨간 물결 (기울이지 않고 줄마다 끝까지 반복)
 const RULED_TEXT = "w-full pt-1 leading-8 whitespace-pre-line";
 const ruledLines = (color) => ({
   backgroundImage: `linear-gradient(transparent calc(2rem - 1px), ${color} calc(2rem - 1px))`,
   backgroundSize: "100% 2rem",
 });
+// 12×32px 한 칸에 물결 한 번 (빨간펜 #e0453a를 연하게) — 칸끼리 이어지도록 양 끝 높이를 맞춤
+const WAVY_TILE =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='32'%3E%3Cpath d='M0 30.5Q3 28.5 6 30.5T12 30.5' fill='none' stroke='%23e0453a' stroke-opacity='0.45' stroke-width='1.3'/%3E%3C/svg%3E\")";
+const wavyLines = {
+  backgroundImage: WAVY_TILE,
+  backgroundSize: "12px 2rem",
+  backgroundRepeat: "repeat",
+};
 
 // 그림일기 맨 위 칸 — 왼쪽 제목 칸 + 오른쪽 내용 칸
 function HeaderCell({ title, children, className = "" }) {
@@ -131,9 +140,7 @@ function DiarySummary({
             </p>
             <p
               className={`${RULED_TEXT} font-logo text-title text-red-pen`}
-              style={ruledLines(
-                "color-mix(in srgb, var(--color-red-pen) 35%, transparent)",
-              )}
+              style={wavyLines}
             >
               {q.content}
             </p>
