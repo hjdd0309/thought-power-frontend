@@ -173,7 +173,7 @@ function ArchivePage() {
                   }`}
                 >
                   {day}
-                  {/* 일기가 있는 날: 그날 감정 캐릭터를 작게 */}
+                  {/* 일기가 있는 날: 그날 감정 이모지를 작게 */}
                   {emotion && (
                     <EmotionCharacter emotion={emotion.code} size={26} />
                   )}

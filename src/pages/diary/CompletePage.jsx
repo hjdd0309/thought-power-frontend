@@ -31,7 +31,7 @@ function StarSticker({ size = 36 }) {
 }
 
 // C14 / D07 작성 완료 — 보관함에서 보기 · 홈으로 돌아가기
-// 오늘 고른 감정 캐릭터가 색종이와 함께 기뻐하고, 칭찬 스티커 1개를 보여준다
+// 오늘 고른 감정 이모지가 색종이와 함께 기뻐하고, 칭찬 스티커 1개를 보여준다
 function CompletePage() {
   const navigate = useNavigate();
   const { emotion, reset } = useDiary();
