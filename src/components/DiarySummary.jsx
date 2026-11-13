@@ -1,3 +1,4 @@
+import EmotionCharacter from "@/components/EmotionCharacter";
 import { getEmotion } from "@/constants/emotions";
 import { getQuestionStep } from "@/constants/diary";
 import { formatKoreanDate } from "@/utils/date";
@@ -18,7 +19,7 @@ function DiarySummary({
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3 rounded-card bg-yellow-light p-5">
         <div className="flex h-8 items-center gap-3">
-          {e && <img src={e.icon} alt="" width={30} height={30} />}
+          {e && <EmotionCharacter emotion={emotion} size={32} />}
           <p className="text-label font-medium whitespace-pre-wrap">
             {e?.label}
             {"  ·  "}

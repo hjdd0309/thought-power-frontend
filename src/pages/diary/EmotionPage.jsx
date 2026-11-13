@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { getTodayDiary } from "@/api/archive";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
+import EmotionCharacter from "@/components/EmotionCharacter";
 import LoadingState from "@/components/LoadingState";
 import SelectCard from "@/components/SelectCard";
 import TopBar from "@/components/TopBar";
@@ -41,18 +42,29 @@ function EmotionPage() {
           오늘 가장 크게 느낀 감정을 골라봐요.
         </p>
         <div className="mt-11.5 grid grid-cols-2 gap-x-3.5 gap-y-3">
-          {EMOTIONS.map((e) => (
-            <SelectCard
-              key={e.code}
-              rounded="rounded-card"
-              selected={emotion === e.code}
-              onClick={() => update({ emotion: e.code })}
-              className="h-31 flex-col gap-3"
-            >
-              <img src={e.icon} alt="" width={48} height={48} />
-              {e.label}
-            </SelectCard>
-          ))}
+          {EMOTIONS.map((e) => {
+            const selected = emotion === e.code;
+            // 하나를 고르면 나머지 카드는 살짝 흐리게
+            const dimmed = Boolean(emotion) && !selected;
+            return (
+              <SelectCard
+                key={e.code}
+                rounded="rounded-card"
+                selected={selected}
+                onClick={() => update({ emotion: e.code })}
+                className={`h-31 flex-col gap-2 transition-opacity duration-300 ${
+                  dimmed ? "opacity-60" : ""
+                }`}
+              >
+                <EmotionCharacter
+                  emotion={e.code}
+                  size={64}
+                  selected={selected || undefined}
+                />
+                {e.label}
+              </SelectCard>
+            );
+          })}
         </div>
       </main>
       <BottomAction>
