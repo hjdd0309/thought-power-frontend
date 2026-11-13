@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getEmotionReport } from "@/api/archive";
 import { USE_MOCK } from "@/api/mock";
+import EmotionCharacter from "@/components/EmotionCharacter";
 import ErrorRetry from "@/components/ErrorRetry";
 import LoadingState from "@/components/LoadingState";
 import TopBar from "@/components/TopBar";
@@ -178,10 +179,7 @@ function ReportPage() {
                   key={e.code}
                   className="flex w-12.75 flex-col items-center gap-1.5"
                 >
-                  <span
-                    className="size-2.5 rounded-[5px]"
-                    style={{ backgroundColor: e.color }}
-                  />
+                  <EmotionCharacter emotion={e.code} size={30} />
                   <span className="text-legend font-medium text-muted">
                     {e.label}
                   </span>
