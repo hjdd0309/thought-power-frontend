@@ -39,11 +39,16 @@ const ruledLines = (color) => ({
 // 12×32px 한 칸에 물결 한 번 (빨간펜 #e0453a를 연하게) — 칸끼리 이어지도록 양 끝 높이를 맞춤
 const WAVY_TILE =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='32'%3E%3Cpath d='M0 30.5Q3 28.5 6 30.5T12 30.5' fill='none' stroke='%23e0453a' stroke-opacity='0.45' stroke-width='1.3'/%3E%3C/svg%3E\")";
+// 글자 아랫부분과 겹치지 않게 2.5px 아래로 내리고, 위쪽으로 반복된 물결은 본문 영역 밖이라 잘라낸다
 const wavyLines = {
   backgroundImage: WAVY_TILE,
   backgroundSize: "12px 2rem",
   backgroundRepeat: "repeat",
+  backgroundPosition: "0 2.5px",
+  backgroundClip: "content-box",
 };
+// 질문 물결과 답변을 한 묶음으로 — 카드 간격(gap-2.5)보다 답변을 8px 위로
+const ANSWER_PULL_UP = "-mt-2";
 
 // 그림일기 맨 위 칸 — 왼쪽 제목 칸 + 오른쪽 내용 칸
 function HeaderCell({ title, children, className = "" }) {
@@ -145,12 +150,14 @@ function DiarySummary({
               {q.content}
             </p>
             {empty && emptyAnswerText ? (
-              <p className="text-body leading-[1.45] font-medium text-muted">
+              <p
+                className={`${ANSWER_PULL_UP} text-body leading-[1.45] font-medium text-muted`}
+              >
                 {emptyAnswerText}
               </p>
             ) : (
               <p
-                className={`${RULED_TEXT} text-body font-medium text-pencil`}
+                className={`${RULED_TEXT} ${ANSWER_PULL_UP} text-body font-medium text-pencil`}
                 style={ruledLines("var(--color-paper-line)")}
               >
                 {q.answer}
