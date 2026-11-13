@@ -4,6 +4,7 @@ import { getDiariesByDate, getMonthlyDiaries } from "@/api/archive";
 import backIcon from "@/assets/icons/back.svg";
 import rightIcon from "@/assets/icons/right.svg";
 import Button from "@/components/Button";
+import EmotionCharacter from "@/components/EmotionCharacter";
 import ErrorRetry from "@/components/ErrorRetry";
 import { LoadingDots } from "@/components/LoadingState";
 import useRequest from "@/hooks/useRequest";
@@ -148,7 +149,7 @@ function ArchivePage() {
           ))}
         </div>
         {weeks.map((week, wi) => (
-          <div key={wi} className="flex h-11 justify-between">
+          <div key={wi} className="flex h-13 justify-between">
             {week.map((date, di) => {
               if (!date) return <span key={di} className="w-11.5" />;
               const day = Number(date.slice(8));
@@ -161,18 +162,20 @@ function ArchivePage() {
                   type="button"
                   disabled={future}
                   onClick={(e) => handleTap(date, e)}
-                  aria-label={`${cursor.month}월 ${day}일`}
+                  aria-label={`${cursor.month}월 ${day}일${
+                    emotion ? ` ${emotion.label}` : ""
+                  }`}
                   aria-pressed={Boolean(selected)}
-                  className={`relative flex h-11 w-11.5 items-center justify-center rounded-[22px] text-body-sm font-medium ${
-                    future ? "text-muted" : "text-ink"
-                  } ${selected ? "bg-yellow-light" : ""}`}
+                  className={`relative flex h-13 w-11.5 flex-col items-center justify-center rounded-[22px] font-medium ${
+                    emotion ? "text-label" : "text-body-sm"
+                  } ${future ? "text-muted" : "text-ink"} ${
+                    selected ? "bg-yellow-light" : ""
+                  }`}
                 >
                   {day}
+                  {/* 일기가 있는 날: 그날 감정 이모지를 작게 */}
                   {emotion && (
-                    <span
-                      className="absolute bottom-0 size-1 rounded-full"
-                      style={{ backgroundColor: emotion.color }}
-                    />
+                    <EmotionCharacter emotion={emotion.code} size={26} />
                   )}
                 </button>
               );

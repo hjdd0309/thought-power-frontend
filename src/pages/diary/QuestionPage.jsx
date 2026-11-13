@@ -3,8 +3,9 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { QUESTION_FLOW_ACTIONS } from "@/api/questionFlow";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
+import Character from "@/components/Character";
 import ErrorRetry from "@/components/ErrorRetry";
-import LoadingState from "@/components/LoadingState";
+import { LoadingDots } from "@/components/LoadingState";
 import ProgressBar from "@/components/ProgressBar";
 import TopBar from "@/components/TopBar";
 import VoiceRecorder from "@/components/VoiceRecorder";
@@ -18,6 +19,7 @@ import useQuestionFlow from "@/hooks/useQuestionFlow";
 import useVoiceRecorder from "@/hooks/useVoiceRecorder";
 import { MOCK_TRANSCRIPTS } from "@/mocks/questions";
 import TranscriptConfirm from "@/pages/diary/TranscriptConfirm";
+import QuestionHelp from "@/pages/diary/QuestionHelp";
 import VoiceActions from "@/pages/diary/VoiceActions";
 
 const EMPTY_HINT = "생각이 안 나면 비워 둬도 괜찮아요";
@@ -36,14 +38,22 @@ function FlowNotice({ message }) {
   );
 }
 
-// 질문 카드 상단: 질문 유형 + 질문 문구
-function QuestionHeading({ label, content, top = "pt-7.75" }) {
+// 질문 카드 상단: 질문 유형 + (홈 캐릭터가 묻는) 질문 문구 + 잘 모르겠어요
+function QuestionHeading({ label, content, type, top = "pt-7.75" }) {
   return (
     <div className={`px-5.75 ${top}`}>
       <p className="text-body-sm font-medium text-muted">{label}</p>
-      <h1 className="mt-8 min-h-15.5 text-headline font-bold break-keep">
-        {content}
-      </h1>
+      <div className="mt-6 flex items-start gap-3">
+        <Character
+          name="sit"
+          size={52}
+          className="mx-0 mt-0.5 motion-safe:animate-float"
+        />
+        <h1 className="min-h-15.5 min-w-0 flex-1 text-headline font-bold break-keep">
+          {content}
+        </h1>
+      </div>
+      <QuestionHelp key={type} type={type} className="mt-4" />
     </div>
   );
 }
@@ -104,8 +114,12 @@ function VoiceAnswer({
       <main className="px-5 pt-10.5">
         <FlowNotice message={notice} />
         <section className="min-h-142 rounded-dialog border border-border-neutral bg-white pb-6">
-          <QuestionHeading label={step.label} content={question.content} />
-          <div className="mt-26.5">
+          <QuestionHeading
+            label={step.label}
+            content={question.content}
+            type={question.type ?? step.type}
+          />
+          <div className="mt-14">
             <VoiceRecorder recorder={recorder} onToggle={toggle} />
           </div>
         </section>
@@ -125,7 +139,8 @@ const TEXT_PLACEHOLDER = {
   3: "내 생각을 적어보세요.",
 };
 
-// 질문 대기 — 질문 카드 자리에서 캐릭터가 생각하는 연출 (첫 질문 · 답변 전송 후 다음 질문)
+// 질문 대기 — 질문 카드 자리에서 홈 캐릭터가 "음… 생각 중이야" 하며 흔들리는 연출
+// (첫 질문 · 답변 전송 후 다음 질문)
 function QuestionLoading({ order, inputType }) {
   const step = getQuestionStep(order);
   return (
@@ -142,12 +157,26 @@ function QuestionLoading({ order, inputType }) {
           <p className="px-5.75 pt-7.75 text-body-sm font-medium text-muted">
             {step?.label}
           </p>
-          <LoadingState
-            className="my-auto"
-            character="note"
-            size={160}
-            message="생각의힘이 질문을 생각하고 있어요"
-          />
+          <div
+            role="status"
+            aria-live="polite"
+            className="my-auto flex animate-fade-in-delayed flex-col items-center gap-4 py-8 text-center"
+          >
+            <p className="relative rounded-bubble bg-yellow-light px-5 py-3 text-lead font-bold">
+              음… 생각 중이야
+              <span
+                aria-hidden="true"
+                className="absolute -bottom-1.5 left-1/2 size-3.5 -translate-x-1/2 rotate-45 bg-yellow-light"
+              />
+            </p>
+            <div className="origin-bottom motion-safe:animate-think">
+              <Character name="sit" size={140} />
+            </div>
+            <LoadingDots />
+            <p className="text-body-sm font-medium text-muted">
+              생각의힘이 질문을 생각하고 있어요
+            </p>
+          </div>
         </section>
       </main>
       <BottomAction>
@@ -176,10 +205,11 @@ function TextAnswer({ question, step, initial, notice, error, onSubmit }) {
       </TopBar>
       <main className="flex flex-col px-5 pt-10.75">
         <FlowNotice message={notice} />
-        <section className="h-51 rounded-dialog border border-border-neutral bg-white">
+        <section className="min-h-51 rounded-dialog border border-border-neutral bg-white pb-5">
           <QuestionHeading
             label={step.label}
             content={question.content}
+            type={question.type ?? step.type}
             top="pt-7.25"
           />
         </section>
