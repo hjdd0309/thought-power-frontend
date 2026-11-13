@@ -63,6 +63,24 @@
   --animate-think: think 2.4s ease-in-out infinite;
   /* 홈 캐릭터가 살짝 위아래로 둥둥 떠다니는 모션 */
   --animate-float: float 3s ease-in-out infinite;
+  /* 선택한 감정 캐릭터가 통통 튀는 모션 */
+  --animate-hop: hop 0.9s ease-in-out infinite;
+
+  @keyframes hop {
+    0%,
+    100% {
+      transform: translateY(0) scale(1, 1);
+    }
+    15% {
+      transform: translateY(0) scale(1.08, 0.92);
+    }
+    45% {
+      transform: translateY(-14%) scale(0.96, 1.05);
+    }
+    75% {
+      transform: translateY(0) scale(1.05, 0.95);
+    }
+  }
 
   @keyframes fade-in {
     from {

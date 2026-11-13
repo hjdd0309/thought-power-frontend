@@ -1,3 +1,4 @@
+import EmotionCharacter from "@/components/EmotionCharacter";
 import { getEmotion } from "@/constants/emotions";
 
 const PLOT_HEIGHT = 130; // 0 → 최대 눈금 (Figma: 10 = 34px, 0 = 164px)
@@ -44,12 +45,9 @@ function EmotionBarChart({ distribution }) {
           return (
             <div
               key={d.emotion}
-              className="flex h-11 w-13 flex-col items-center gap-1"
+              className="flex h-13 w-13 flex-col items-center gap-0.5"
             >
-              <span
-                className="size-2.5 rounded-[5px]"
-                style={{ backgroundColor: e?.color }}
-              />
+              <EmotionCharacter emotion={d.emotion} size={30} />
               <span className="text-legend font-medium text-ink">
                 {e?.label}
               </span>
