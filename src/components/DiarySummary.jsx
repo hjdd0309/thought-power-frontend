@@ -29,6 +29,13 @@ function toManuscriptCells(text) {
   return cells;
 }
 
+// 노트 줄 — 질문·답변이 같은 줄 간격(2rem)·시작점·길이를 쓰고 색만 다르다
+const RULED_TEXT = "w-full pt-1 leading-8 whitespace-pre-line";
+const ruledLines = (color) => ({
+  backgroundImage: `linear-gradient(transparent calc(2rem - 1px), ${color} calc(2rem - 1px))`,
+  backgroundSize: "100% 2rem",
+});
+
 // 그림일기 맨 위 칸 — 왼쪽 제목 칸 + 오른쪽 내용 칸
 function HeaderCell({ title, children, className = "" }) {
   return (
@@ -122,7 +129,12 @@ function DiarySummary({
               </span>
               {getQuestionStep(q.order)?.label}
             </p>
-            <p className="-rotate-1 font-logo text-title leading-[1.4] text-red-pen underline decoration-red-pen/50 decoration-wavy decoration-1 underline-offset-6">
+            <p
+              className={`${RULED_TEXT} font-logo text-title text-red-pen`}
+              style={ruledLines(
+                "color-mix(in srgb, var(--color-red-pen) 35%, transparent)",
+              )}
+            >
               {q.content}
             </p>
             {empty && emptyAnswerText ? (
@@ -131,12 +143,8 @@ function DiarySummary({
               </p>
             ) : (
               <p
-                className="pt-1 text-body leading-8 font-medium whitespace-pre-line text-pencil"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(transparent calc(2rem - 1px), var(--color-paper-line) calc(2rem - 1px))",
-                  backgroundSize: "100% 2rem",
-                }}
+                className={`${RULED_TEXT} text-body font-medium text-pencil`}
+                style={ruledLines("var(--color-paper-line)")}
               >
                 {q.answer}
               </p>
