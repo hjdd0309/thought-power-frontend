@@ -69,7 +69,7 @@ function StartPage() {
   };
 
   return (
-    <main className="flex flex-1 flex-col items-center pt-80.25 text-center">
+    <main className="flex flex-1 flex-col items-center justify-center pb-90.5 text-center">
       <p className="text-body-sm font-medium text-ink">
         질문으로 생각을 키우는 AI 일기 서비스
       </p>

@@ -10,7 +10,7 @@ function VersionPage() {
   return (
     <>
       <TopBar title="버전 정보" />
-      <main className="flex flex-col items-center pt-61.75 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center pb-14 text-center">
         <h1 className="font-logo text-[56px] leading-[1.2] text-yellow">
           생각의힘
         </h1>

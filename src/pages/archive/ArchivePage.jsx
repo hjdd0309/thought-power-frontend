@@ -112,7 +112,7 @@ function ArchivePage() {
 
   return (
     <main className="flex flex-col px-5">
-      <h1 className="mt-16.25 text-center text-lead font-bold">보관함</h1>
+      <h1 className="mt-5.75 text-center text-lead font-bold">보관함</h1>
 
       <div className="mt-10.25 flex items-center justify-between px-4.5">
         <button

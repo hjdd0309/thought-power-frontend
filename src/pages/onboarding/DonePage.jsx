@@ -21,7 +21,7 @@ function DonePage() {
 
   return (
     <>
-      <main className="flex flex-col items-center pt-60.75">
+      <main className="flex flex-1 flex-col items-center justify-center py-6">
         <Character name="wave" size={260} />
         <h1 className="mt-12.5 text-headline font-bold">이제 시작해요!</h1>
       </main>

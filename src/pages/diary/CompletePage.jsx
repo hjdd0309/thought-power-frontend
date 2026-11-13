@@ -17,7 +17,7 @@ function CompletePage() {
 
   return (
     <>
-      <header className="mt-17 flex justify-end px-5">
+      <header className="mt-6.5 flex justify-end px-5">
         <Link to="/settings" aria-label="설정" className="size-8">
           <img src={settingIcon} alt="" width={32} height={32} />
         </Link>

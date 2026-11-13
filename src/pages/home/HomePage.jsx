@@ -6,7 +6,7 @@ import Character from "@/components/Character";
 function HomePage() {
   return (
     <main className="flex flex-1 flex-col">
-      <header className="mt-16.5 flex items-center justify-between px-5">
+      <header className="mt-6 flex items-center justify-between px-5">
         <h1 className="font-logo text-[30px] leading-[1.2] text-ink">
           생각의힘
         </h1>

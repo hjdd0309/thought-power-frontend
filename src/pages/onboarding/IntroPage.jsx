@@ -10,7 +10,7 @@ function IntroPage() {
 
   return (
     <>
-      <main className="flex flex-col items-center pt-50.5 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center py-6 text-center">
         <SpeechBubble className="self-stretch">
           안녕! 나는 생각의힘이야.
           <br />
