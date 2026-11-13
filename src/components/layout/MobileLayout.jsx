@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import DemoBadge from "@/components/DemoBadge";
 
 // Figma 프레임 너비(402px) 기준 중앙 정렬 컨테이너
 function MobileLayout() {
@@ -6,6 +7,7 @@ function MobileLayout() {
     <div className="min-h-dvh bg-white">
       <div className="relative mx-auto flex min-h-dvh w-full max-w-mobile flex-col bg-white">
         <Outlet />
+        <DemoBadge />
       </div>
     </div>
   );

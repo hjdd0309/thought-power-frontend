@@ -1,9 +1,12 @@
 // mock 응답 헬퍼 — 실제 API처럼 비동기로 복사본을 돌려준다
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
+// [DEMO] feature/ui-polish 데모 브랜치 전용 — 환경변수와 상관없이 항상 mock 데이터를 쓴다
+// 데모용, 머지 금지 — 동의 후 실서버 연결 버전으로 다시 작업
+export const USE_MOCK = true;
 
 // 실제처럼 테스트하기 위한 지연(ms)과 실패 확률(0~1). 기본 0
 const MOCK_DELAY_MS = Number(import.meta.env.VITE_MOCK_DELAY_MS) || 0;
-const MOCK_FAIL_RATE = Number(import.meta.env.VITE_MOCK_FAIL_RATE) || 0;
+// [DEMO] 에러 화면이 섞이지 않게 실패 확률 0으로 고정
+const MOCK_FAIL_RATE = 0;
 
 export class ApiError extends Error {
   constructor(code = "INTERNAL_ERROR", message = "요청에 실패했어요.") {
