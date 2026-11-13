@@ -44,7 +44,7 @@ function HeaderCell({ title, children, className = "" }) {
 }
 
 // 일기 전체 내용 (C13 전체 기록 확인 · E02 일기 상세 공통) — 초등 그림일기장 양식
-// 날짜·오늘의 마음 칸 → 그림 칸(감정 캐릭터) → 원고지 본문 → 선생님 빨간펜 질문과 연필 답
+// 날짜·오늘의 마음 칸 → 그림 칸(감정 이모지) → 원고지 본문 → 선생님 빨간펜 질문과 연필 답
 // emptyAnswerText: 답변이 비어 있을 때 대신 보여줄 회색 문구 (없으면 기존처럼 빈칸)
 function DiarySummary({
   emotion,
@@ -78,7 +78,7 @@ function DiarySummary({
           </HeaderCell>
         </header>
 
-        {/* 그림 칸 — 오늘 감정 캐릭터를 크게 */}
+        {/* 그림 칸 — 오늘 감정 이모지를 크게 */}
         <div
           className="flex h-50 items-end justify-center border-b-2 border-paper-line pb-5"
           style={{

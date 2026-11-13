@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { QUESTION_FLOW_ACTIONS } from "@/api/questionFlow";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
-import EmotionCharacter from "@/components/EmotionCharacter";
+import Character from "@/components/Character";
 import ErrorRetry from "@/components/ErrorRetry";
 import { LoadingDots } from "@/components/LoadingState";
 import ProgressBar from "@/components/ProgressBar";
@@ -38,16 +38,16 @@ function FlowNotice({ message }) {
   );
 }
 
-// 질문 카드 상단: 질문 유형 + (오늘 고른 감정 캐릭터가 묻는) 질문 문구 + 잘 모르겠어요
-function QuestionHeading({ label, content, emotion, type, top = "pt-7.75" }) {
+// 질문 카드 상단: 질문 유형 + (홈 캐릭터가 묻는) 질문 문구 + 잘 모르겠어요
+function QuestionHeading({ label, content, type, top = "pt-7.75" }) {
   return (
     <div className={`px-5.75 ${top}`}>
       <p className="text-body-sm font-medium text-muted">{label}</p>
       <div className="mt-6 flex items-start gap-3">
-        <EmotionCharacter
-          emotion={emotion}
+        <Character
+          name="sit"
           size={52}
-          className="mt-0.5 motion-safe:animate-float"
+          className="mx-0 mt-0.5 motion-safe:animate-float"
         />
         <h1 className="min-h-15.5 min-w-0 flex-1 text-headline font-bold break-keep">
           {content}
@@ -62,7 +62,6 @@ function QuestionHeading({ label, content, emotion, type, top = "pt-7.75" }) {
 function VoiceAnswer({
   question,
   step,
-  emotion,
   initial,
   notice,
   error,
@@ -118,7 +117,6 @@ function VoiceAnswer({
           <QuestionHeading
             label={step.label}
             content={question.content}
-            emotion={emotion}
             type={question.type ?? step.type}
           />
           <div className="mt-14">
@@ -141,9 +139,9 @@ const TEXT_PLACEHOLDER = {
   3: "내 생각을 적어보세요.",
 };
 
-// 질문 대기 — 질문 카드 자리에서 감정 캐릭터가 "음… 생각 중이야" 하며 흔들리는 연출
+// 질문 대기 — 질문 카드 자리에서 홈 캐릭터가 "음… 생각 중이야" 하며 흔들리는 연출
 // (첫 질문 · 답변 전송 후 다음 질문)
-function QuestionLoading({ order, inputType, emotion }) {
+function QuestionLoading({ order, inputType }) {
   const step = getQuestionStep(order);
   return (
     <>
@@ -172,7 +170,7 @@ function QuestionLoading({ order, inputType, emotion }) {
               />
             </p>
             <div className="origin-bottom motion-safe:animate-think">
-              <EmotionCharacter emotion={emotion} size={140} />
+              <Character name="sit" size={140} />
             </div>
             <LoadingDots />
             <p className="text-body-sm font-medium text-muted">
@@ -195,15 +193,7 @@ function QuestionLoading({ order, inputType, emotion }) {
 }
 
 // 글로 답하기: D03~D05 — 비어 있어도 다음으로 진행 가능
-function TextAnswer({
-  question,
-  step,
-  emotion,
-  initial,
-  notice,
-  error,
-  onSubmit,
-}) {
+function TextAnswer({ question, step, initial, notice, error, onSubmit }) {
   const { order } = question;
   const [text, setText] = useState(initial ?? "");
   const isLast = order === QUESTION_COUNT;
@@ -219,7 +209,6 @@ function TextAnswer({
           <QuestionHeading
             label={step.label}
             content={question.content}
-            emotion={emotion}
             type={question.type ?? step.type}
             top="pt-7.25"
           />
@@ -299,7 +288,7 @@ function QuestionRoute() {
     return qf.error ? (
       <QuestionStartError onRetry={qf.start} />
     ) : (
-      <QuestionLoading order={1} inputType={inputType} emotion={emotion} />
+      <QuestionLoading order={1} inputType={inputType} />
     );
   }
 
@@ -308,9 +297,7 @@ function QuestionRoute() {
     return <Navigate to={`/diary/question/${order}`} replace />;
   }
   if (qf.pending) {
-    return (
-      <QuestionLoading order={order} inputType={inputType} emotion={emotion} />
-    );
+    return <QuestionLoading order={order} inputType={inputType} />;
   }
 
   // RETRY(같은 order, 새 version)에도 녹음·입력 상태를 새로 시작
@@ -318,7 +305,6 @@ function QuestionRoute() {
   const props = {
     question,
     step: getQuestionStep(order),
-    emotion,
     initial: qf.error ? (qf.failedAnswer ?? undefined) : undefined,
     notice: qf.notice,
     error: qf.error ? SUBMIT_ERROR : null,
