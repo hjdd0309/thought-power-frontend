@@ -27,7 +27,7 @@ function HomePage() {
         </p>
       </Link>
 
-      <Character name="sit" className="mt-11.75" />
+      <Character name="sit" className="mt-11.75 motion-safe:animate-float" />
     </main>
   );
 }
