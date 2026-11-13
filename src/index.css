@@ -30,6 +30,12 @@
   --color-emotion-surprise: #cbec89;
   --color-emotion-shame: #fbc9cd;
 
+  /* 그림일기장(C13·E02) — 종이·원고지 칸·빨간펜·연필 */
+  --color-paper: #fffdf5;
+  --color-paper-line: #ead9b0;
+  --color-red-pen: #e0453a;
+  --color-pencil: #4a4a4a;
+
   /* 가독성/Noto Sans KR/* 텍스트 스타일 (line-height 1.2) */
   --text-caption: 11.5px;
   --text-caption--line-height: 1.2;
