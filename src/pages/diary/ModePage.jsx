@@ -3,10 +3,12 @@ import { Navigate, useNavigate } from "react-router-dom";
 import micIcon from "@/assets/icons/mic.svg";
 import pencilIcon from "@/assets/icons/pencil.svg";
 import Character from "@/components/Character";
+import FixedScreen from "@/components/layout/FixedScreen";
 import SelectCard from "@/components/SelectCard";
 import TopBar from "@/components/TopBar";
 import { INPUT_TYPES } from "@/constants/diary";
 import { useDiary } from "@/contexts/diary";
+import { vspace } from "@/utils/responsiveSpace";
 
 const MODES = [
   { type: INPUT_TYPES.VOICE, label: "말로 쓰기", icon: micIcon, size: 40 },
@@ -34,16 +36,24 @@ function ModePage() {
   if (!emotion) return <Navigate to="/diary/emotion" replace />;
 
   return (
-    <>
+    <FixedScreen>
       <TopBar onBack={() => navigate("/diary/emotion")} />
-      <main className="flex flex-col px-5">
-        <h1 className="mt-9 text-headline font-bold">
+      <main className="flex flex-1 flex-col overflow-y-auto px-5">
+        <h1 style={{ marginTop: vspace(36) }} className="text-headline font-bold">
           어떤 방법으로
           <br />
           일기를 쓸까요?
         </h1>
-        <Character name="note" size={230} height={255} className="mt-10.25" />
-        <div className="mt-7.5 grid grid-cols-2 gap-3.5">
+        <Character
+          name="note"
+          size={230}
+          height={255}
+          style={{ marginTop: vspace(41) }}
+        />
+        <div
+          style={{ marginTop: vspace(30) }}
+          className="grid grid-cols-2 gap-3.5"
+        >
           {MODES.map((m) => (
             <SelectCard
               key={m.type}
@@ -61,7 +71,7 @@ function ModePage() {
           ))}
         </div>
       </main>
-    </>
+    </FixedScreen>
   );
 }
 

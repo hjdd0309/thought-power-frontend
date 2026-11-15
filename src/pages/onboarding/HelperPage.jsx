@@ -3,6 +3,7 @@ import SelectCard from "@/components/SelectCard";
 import { GUARDIAN_TYPES } from "@/constants/onboarding";
 import { useOnboarding } from "@/contexts/onboarding";
 import OnboardingStep from "@/pages/onboarding/OnboardingStep";
+import { vspace } from "@/utils/responsiveSpace";
 
 // A05 도움을 주는 사람 선택 (진행 1/3)
 function HelperPage() {
@@ -17,7 +18,10 @@ function HelperPage() {
       nextDisabled={!guardianType}
       onNext={() => navigate("/onboarding/name")}
     >
-      <div className="mt-11.5 grid grid-cols-2 gap-3">
+      <div
+        style={{ marginTop: vspace(46) }}
+        className="grid grid-cols-2 gap-3"
+      >
         {GUARDIAN_TYPES.map(({ code, label }) => (
           <SelectCard
             key={code}

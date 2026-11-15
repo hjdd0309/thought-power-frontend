@@ -5,7 +5,9 @@ import Button from "@/components/Button";
 import Character from "@/components/Character";
 import Confetti from "@/components/Confetti";
 import EmotionCharacter from "@/components/EmotionCharacter";
+import FixedScreen from "@/components/layout/FixedScreen";
 import { useDiary } from "@/contexts/diary";
+import { vspace } from "@/utils/responsiveSpace";
 
 // 칭찬 스티커 (별 모양, 흰 테두리 스티커 느낌)
 function StarSticker({ size = 36 }) {
@@ -42,24 +44,33 @@ function CompletePage() {
   };
 
   return (
-    <>
+    <FixedScreen>
       <header className="mt-6.5 flex justify-end px-5">
         <Link to="/settings" aria-label="설정" className="size-8">
           <img src={settingIcon} alt="" width={32} height={32} />
         </Link>
       </header>
-      <main className="px-5 pt-13">
-        <section className="relative flex h-119.25 flex-col items-center rounded-dialog border border-border-neutral bg-white pt-14 text-center">
+      <main
+        style={{ paddingTop: vspace(52) }}
+        className="flex-1 overflow-y-auto px-5"
+      >
+        <section
+          style={{ paddingTop: vspace(56), paddingBottom: vspace(32) }}
+          className="relative flex flex-col items-center rounded-dialog border border-border-neutral bg-white text-center"
+        >
           <Confetti />
           <div className="relative motion-safe:animate-cheer">
             {emotion ? (
-              <EmotionCharacter emotion={emotion} size={180} />
+              <EmotionCharacter emotion={emotion} size={vspace(180)} />
             ) : (
-              // 새로고침 등으로 감정 정보가 없으면 기본 캐릭터
+              // 새로고침 등으로 감정 정보가 없으면 기본 캐릭터 (Character는 자체적으로 vspace 축소 적용)
               <Character name="sit" size={180} />
             )}
           </div>
-          <h1 className="mt-8 text-headline font-bold">
+          <h1
+            style={{ marginTop: vspace(32) }}
+            className="text-headline font-bold"
+          >
             오늘의 일기를 완성했어요!
           </h1>
           <p className="mt-3.5 text-body-sm font-medium text-muted">
@@ -67,14 +78,15 @@ function CompletePage() {
           </p>
           <p
             role="status"
-            className="mt-7 flex animate-pop-in items-center gap-2 rounded-full bg-yellow-light py-2 pr-4.5 pl-2.5 text-body-sm font-bold"
+            style={{ marginTop: vspace(28) }}
+            className="flex animate-pop-in items-center gap-2 rounded-full bg-yellow-light py-2 pr-4.5 pl-2.5 text-body-sm font-bold"
           >
             <StarSticker />
             칭찬 스티커 1개를 받았어요!
           </p>
         </section>
       </main>
-      <BottomAction className="items-center gap-3.5 pb-20.25">
+      <BottomAction bottom={81} className="items-center gap-3.5">
         <Button onClick={() => go("/archive")}>보관함에서 보기</Button>
         <button
           type="button"
@@ -84,7 +96,7 @@ function CompletePage() {
           홈으로 돌아가기
         </button>
       </BottomAction>
-    </>
+    </FixedScreen>
   );
 }
 

@@ -4,8 +4,10 @@ import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import Character from "@/components/Character";
 import ErrorRetry from "@/components/ErrorRetry";
+import FixedScreen from "@/components/layout/FixedScreen";
 import { useOnboarding } from "@/contexts/onboarding";
 import useSubmit from "@/hooks/useSubmit";
+import { vspace } from "@/utils/responsiveSpace";
 import { markOnboarded } from "@/utils/storage";
 
 // A08 시작 준비 완료 — 온보딩 값 일괄 저장 후 홈 이동
@@ -20,10 +22,15 @@ function DonePage() {
   });
 
   return (
-    <>
-      <main className="flex flex-1 flex-col items-center justify-center py-6">
+    <FixedScreen>
+      <main className="flex flex-1 flex-col items-center justify-center overflow-y-auto py-6">
         <Character name="wave" size={260} />
-        <h1 className="mt-12.5 text-headline font-bold">이제 시작해요!</h1>
+        <h1
+          style={{ marginTop: vspace(50) }}
+          className="text-headline font-bold"
+        >
+          이제 시작해요!
+        </h1>
       </main>
       <BottomAction>
         {submit.error && (
@@ -33,7 +40,7 @@ function DonePage() {
           시작하기
         </Button>
       </BottomAction>
-    </>
+    </FixedScreen>
   );
 }
 

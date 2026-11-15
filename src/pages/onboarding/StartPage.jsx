@@ -4,6 +4,7 @@ import { getTerms } from "@/api/settings";
 import checkIcon from "@/assets/icons/check.svg";
 import BottomSheet from "@/components/BottomSheet";
 import Button from "@/components/Button";
+import FixedScreen from "@/components/layout/FixedScreen";
 import { AGREEMENT_ITEMS } from "@/constants/onboarding";
 import { useOnboarding } from "@/contexts/onboarding";
 import useRequest from "@/hooks/useRequest";
@@ -69,13 +70,15 @@ function StartPage() {
   };
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center pb-90.5 text-center">
-      <p className="text-body-sm font-medium text-ink">
-        질문으로 생각을 키우는 AI 일기 서비스
-      </p>
-      <h1 className="mt-4.5 font-logo text-[56px] leading-[1.2] text-yellow">
-        생각의힘
-      </h1>
+    <FixedScreen>
+      <main className="flex flex-1 flex-col items-center justify-center overflow-y-auto pb-90.5 text-center">
+        <p className="text-body-sm font-medium text-ink">
+          질문으로 생각을 키우는 AI 일기 서비스
+        </p>
+        <h1 className="mt-4.5 font-logo text-[56px] leading-[1.2] text-yellow">
+          생각의힘
+        </h1>
+      </main>
 
       {/* 필수 동의라 바깥 영역을 눌러도 닫지 않는다 */}
       <BottomSheet open onClose={() => {}}>
@@ -105,7 +108,7 @@ function StartPage() {
           </AgreeRow>
         </div>
       </BottomSheet>
-    </main>
+    </FixedScreen>
   );
 }
 

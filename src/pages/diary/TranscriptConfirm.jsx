@@ -1,6 +1,7 @@
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import ErrorRetry from "@/components/ErrorRetry";
+import { vspace } from "@/utils/responsiveSpace";
 
 // 음성 변환 결과 수정·확인 (C03 · C06 · C09 · C12)
 // - allowEmpty: 질문 답변(C06·C09·C12)은 비어 있어도 확인 가능. 일기 본문(C03)은 필수
@@ -16,13 +17,16 @@ function TranscriptConfirm({
 }) {
   return (
     <>
-      <main className="flex flex-col gap-4.5 px-5 pt-6.75">
+      <main
+        style={{ paddingTop: vspace(27) }}
+        className="flex flex-1 flex-col gap-4.5 overflow-y-auto px-5"
+      >
         <h1 className="text-headline font-bold">이렇게 기록할까요?</h1>
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label="기록 내용"
-          className="h-88 w-full resize-none rounded-card border border-border-neutral bg-white p-5 text-[20px] leading-[1.2] font-medium text-ink outline-none focus:border-yellow"
+          className="min-h-32 w-full flex-1 resize-none rounded-card border border-border-neutral bg-white p-5 text-[20px] leading-[1.2] font-medium text-ink outline-none focus:border-yellow"
         />
         {hint && <p className="text-body-sm font-medium text-muted">{hint}</p>}
       </main>

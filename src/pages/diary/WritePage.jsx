@@ -3,18 +3,20 @@ import { Navigate, useNavigate } from "react-router-dom";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import Character from "@/components/Character";
+import FixedScreen from "@/components/layout/FixedScreen";
 import TopBar from "@/components/TopBar";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import { INPUT_TYPES, TEXT_MAX_LENGTH } from "@/constants/diary";
 import { useDiary } from "@/contexts/diary";
 import useVoiceRecorder from "@/hooks/useVoiceRecorder";
 import { MOCK_TRANSCRIPTS } from "@/mocks/questions";
+import { vspace } from "@/utils/responsiveSpace";
 import TranscriptConfirm from "@/pages/diary/TranscriptConfirm";
 import VoiceActions from "@/pages/diary/VoiceActions";
 
 function Title() {
   return (
-    <h1 className="mt-8 text-headline font-bold">
+    <h1 style={{ marginTop: vspace(32) }} className="text-headline font-bold">
       오늘 어떤 일이
       <br />
       있었나요?
@@ -41,7 +43,7 @@ function VoiceWrite({ onSubmit, onSwitchToText }) {
 
   if (draft !== null) {
     return (
-      <>
+      <FixedScreen>
         <TopBar onBack={() => setDraft(null)} />
         <TranscriptConfirm
           value={draft}
@@ -52,17 +54,22 @@ function VoiceWrite({ onSubmit, onSwitchToText }) {
           }}
           onConfirm={() => onSubmit(draft.trim())}
         />
-      </>
+      </FixedScreen>
     );
   }
 
   return (
-    <>
+    <FixedScreen>
       <TopBar />
-      <main className="flex flex-col px-5">
+      <main className="flex flex-1 flex-col overflow-y-auto px-5">
         <Title />
-        <Character name="note" size={170} height={180} className="mt-14" />
-        <div className="mt-6.75">
+        <Character
+          name="note"
+          size={170}
+          height={180}
+          style={{ marginTop: vspace(56) }}
+        />
+        <div style={{ marginTop: vspace(27) }}>
           <VoiceRecorder recorder={recorder} onToggle={toggle} />
         </div>
       </main>
@@ -71,7 +78,7 @@ function VoiceWrite({ onSubmit, onSwitchToText }) {
         onToggle={toggle}
         onSwitchToText={onSwitchToText}
       />
-    </>
+    </FixedScreen>
   );
 }
 
@@ -80,9 +87,9 @@ function TextWrite({ initial, onSubmit }) {
   const [text, setText] = useState(initial);
 
   return (
-    <>
+    <FixedScreen>
       <TopBar />
-      <main className="flex flex-col px-5">
+      <main className="flex flex-1 flex-col overflow-y-auto px-5">
         <Title />
         <textarea
           value={text}
@@ -90,7 +97,8 @@ function TextWrite({ initial, onSubmit }) {
           onChange={(e) => setText(e.target.value)}
           placeholder="오늘 있었던 일을 자유롭게 적어보세요."
           aria-label="오늘 있었던 일"
-          className="mt-12.5 h-101 w-full resize-none rounded-card border border-border-neutral bg-white px-5 pt-5 text-[20px] leading-[1.2] font-medium text-ink outline-none placeholder:text-muted focus:border-yellow"
+          style={{ marginTop: vspace(50) }}
+          className="min-h-32 w-full flex-1 resize-none rounded-card border border-border-neutral bg-white px-5 pt-5 text-[20px] leading-[1.2] font-medium text-ink outline-none placeholder:text-muted focus:border-yellow"
         />
         <p className="mt-4.5 text-right text-label font-medium text-muted">
           {text.length} / {TEXT_MAX_LENGTH}
@@ -101,7 +109,7 @@ function TextWrite({ initial, onSubmit }) {
           다음으로
         </Button>
       </BottomAction>
-    </>
+    </FixedScreen>
   );
 }
 
