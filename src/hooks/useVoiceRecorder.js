@@ -83,6 +83,19 @@ function voiceLog(...args) {
   );
 }
 
+// 지금 살아 있는 음성 인식 (페이지 전체에서 하나만 유지)
+let activeRecognition = null;
+
+function killRecognition(recognition) {
+  if (!recognition) return;
+  try {
+    recognition.abort();
+  } catch {
+    /* 이미 종료됨 */
+  }
+  if (activeRecognition === recognition) activeRecognition = null;
+}
+
 const VOICE_HOLD_MS = 700; // 소리 감지 후 파형을 크게 유지하는 시간(모바일 가짜 파형)
 
 /** 이 환경에서 말로 쓰기를 쓸 수 없는 이유 (쓸 수 있으면 null) */
@@ -161,12 +174,9 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     const s = r.current;
     s.recording = false;
     s.onRecognitionEnd = null;
-    try {
-      s.recognition?.abort();
-    } catch {
-      /* 이미 종료됨 */
-    }
+    const rec = s.recognition;
     s.recognition = null;
+    killRecognition(rec);
     if (s.recorder?.state === "recording") s.recorder.stop();
     s.recorder = null;
     releaseDevices();
@@ -198,7 +208,13 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
   // continuous=true(데스크톱·iOS): iOS는 터치 없이 재시작하면 권한 오류가 나서 한 세션으로 유지
   const startRecognition = (Recognition, { continuous = true } = {}) => {
     const s = r.current;
+    // iOS Safari는 이전 인식이 완전히 끝나지 않으면 새 인식이 마이크를 못 받는다
+    // → 화면(훅 인스턴스)과 관계없이 남아 있는 인식을 먼저 확실히 끊는다
+    killRecognition(activeRecognition);
     const recognition = new Recognition();
+    activeRecognition = recognition;
+    // 정지·중단된 이전 인스턴스의 늦은 이벤트가 새 녹음 텍스트를 건드리지 않게 무시
+    const stale = () => s.recognition !== recognition;
     recognition.lang = "ko-KR";
     recognition.continuous = continuous;
     recognition.interimResults = true;
@@ -224,6 +240,7 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     };
 
     recognition.onresult = (event) => {
+      if (stale()) return;
       markVoice();
       s.gotResult = true;
       let finalText = "";
@@ -240,7 +257,13 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     };
 
     recognition.onerror = (event) => {
-      voiceLog("error", event.error, event.message || "");
+      voiceLog(
+        "error",
+        event.error,
+        event.message || "",
+        stale() ? "(stale)" : "",
+      );
+      if (stale()) return;
       if (event.error === "no-speech" || event.error === "aborted") return;
       // 자동 재시작 중 오류는 이미 받은 텍스트를 지키기 위해 무시하고, 정지 버튼에서 마무리
       if (s.restarting && fullText()) return;
@@ -267,7 +290,11 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     };
 
     recognition.onend = () => {
-      voiceLog("end", `recording=${s.recording}`);
+      voiceLog("end", `recording=${s.recording}`, stale() ? "(stale)" : "");
+      if (activeRecognition === recognition && !s.recording) {
+        activeRecognition = null;
+      }
+      if (stale()) return;
       // iOS Safari는 isFinal을 주지 않고 끝내는 경우가 많다 → 인식 중 텍스트도 확정으로 취급
       const piece = `${s.sessionFinal}${s.interim}`.trim();
       if (piece) s.committed = s.committed ? `${s.committed} ${piece}` : piece;
@@ -455,7 +482,10 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
       }
     });
     s.onRecognitionEnd = null;
+    // stop()만으로는 iOS에서 인식이 끝나지 않고 남아 다음 녹음을 막는다 → 확실히 중단
+    const rec = s.recognition;
     s.recognition = null;
+    killRecognition(rec);
     if (s.recorder?.state === "recording") s.recorder.stop();
     s.recorder = null;
     releaseDevices();
