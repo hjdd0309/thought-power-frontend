@@ -56,13 +56,22 @@ function isIOSDevice() {
  * 기기 진단용 로그 — 주소 뒤에 ?voicedebug 를 붙여 한 번 열면 그 탭에서 계속 켜진다.
  * 화면 위쪽에 음성 인식 이벤트를 띄운다. (원인 확인 후 제거 예정)
  */
+// 앱을 처음 불러올 때(라우터가 주소를 바꾸기 전에) ?voicedebug 를 기억해 둔다.
+// ?voicedebug=0 으로 열면 끈다.
+if (typeof window !== "undefined") {
+  try {
+    const flag = new URLSearchParams(window.location.search).get("voicedebug");
+    if (flag === "0") localStorage.removeItem("voicedebug");
+    else if (flag !== null) localStorage.setItem("voicedebug", "1");
+  } catch {
+    /* 저장소 사용 불가 */
+  }
+}
+
 function voiceLog(...args) {
   if (typeof window === "undefined") return;
   try {
-    if (new URLSearchParams(window.location.search).has("voicedebug")) {
-      sessionStorage.setItem("voicedebug", "1");
-    }
-    if (sessionStorage.getItem("voicedebug") !== "1") return;
+    if (localStorage.getItem("voicedebug") !== "1") return;
   } catch {
     return;
   }
