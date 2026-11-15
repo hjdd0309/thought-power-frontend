@@ -3,12 +3,14 @@ import { getTodayDiary } from "@/api/archive";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import EmotionCharacter from "@/components/EmotionCharacter";
+import FixedScreen from "@/components/layout/FixedScreen";
 import LoadingState from "@/components/LoadingState";
 import SelectCard from "@/components/SelectCard";
 import TopBar from "@/components/TopBar";
 import { EMOTIONS } from "@/constants/emotions";
 import { useDiary } from "@/contexts/diary";
 import useRequest from "@/hooks/useRequest";
+import { vspace } from "@/utils/responsiveSpace";
 import AlreadyWritten from "@/pages/diary/AlreadyWritten";
 
 // B02 감정 선택 전(다음 비활성) / B03_0~5 감정 선택(강조 + 다음 활성)
@@ -21,27 +23,33 @@ function EmotionPage() {
 
   if (today.loading) {
     return (
-      <>
+      <FixedScreen>
         <TopBar onBack={() => navigate("/home")} />
         <LoadingState className="my-auto" />
-      </>
+      </FixedScreen>
     );
   }
   if (today.data) return <AlreadyWritten diaryId={today.data.diaryId} />;
 
   return (
-    <>
+    <FixedScreen>
       <TopBar onBack={() => navigate("/home")} />
-      <main className="flex flex-col px-5">
-        <h1 className="mt-8 text-headline font-bold">
+      <main className="flex flex-1 flex-col overflow-y-auto px-5">
+        <h1 style={{ marginTop: vspace(32) }} className="text-headline font-bold">
           오늘의 기분을
           <br />
           알려주세요!
         </h1>
-        <p className="mt-3.5 text-body-sm font-medium text-muted">
+        <p
+          style={{ marginTop: vspace(14) }}
+          className="text-body-sm font-medium text-muted"
+        >
           오늘 가장 크게 느낀 감정을 골라봐요.
         </p>
-        <div className="mt-11.5 grid grid-cols-2 gap-x-3.5 gap-y-3">
+        <div
+          style={{ marginTop: vspace(46) }}
+          className="grid grid-cols-2 gap-x-3.5 gap-y-3"
+        >
           {EMOTIONS.map((e) => {
             const selected = emotion === e.code;
             // 하나를 고르면 나머지 카드는 살짝 흐리게
@@ -52,13 +60,14 @@ function EmotionPage() {
                 rounded="rounded-card"
                 selected={selected}
                 onClick={() => update({ emotion: e.code })}
-                className={`h-31 flex-col gap-2 transition-opacity duration-300 ${
+                style={{ height: vspace(124) }}
+                className={`flex-col gap-2 transition-opacity duration-300 ${
                   dimmed ? "opacity-60" : ""
                 }`}
               >
                 <EmotionCharacter
                   emotion={e.code}
-                  size={64}
+                  size={vspace(64)}
                   selected={selected || undefined}
                 />
                 {e.label}
@@ -72,7 +81,7 @@ function EmotionPage() {
           다음으로
         </Button>
       </BottomAction>
-    </>
+    </FixedScreen>
   );
 }
 

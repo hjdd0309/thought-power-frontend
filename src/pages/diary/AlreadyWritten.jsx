@@ -2,7 +2,9 @@ import { useNavigate } from "react-router-dom";
 import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import Character from "@/components/Character";
+import FixedScreen from "@/components/layout/FixedScreen";
 import TopBar from "@/components/TopBar";
+import { vspace } from "@/utils/responsiveSpace";
 
 // 하루 1개 제한 안내 — Figma에 없는 화면이라 C14 작성 완료 화면 구성을 최소한으로 재사용
 // diaryId를 알면 해당 일기 상세로, 모르면(완료 저장 409) 보관함으로 이동
@@ -15,12 +17,21 @@ function AlreadyWritten({ diaryId, onLeave }) {
   };
 
   return (
-    <>
+    <FixedScreen>
       <TopBar onBack={() => go("/home")} />
-      <main className="px-5 pt-13">
-        <section className="flex flex-col items-center rounded-dialog border border-border-neutral bg-white py-17.75 text-center">
+      <main
+        style={{ paddingTop: vspace(52) }}
+        className="flex-1 overflow-y-auto px-5"
+      >
+        <section
+          style={{ paddingTop: vspace(71), paddingBottom: vspace(71) }}
+          className="flex flex-col items-center rounded-dialog border border-border-neutral bg-white text-center"
+        >
           <Character name="sit" className="-translate-x-1.25" />
-          <h1 className="mt-11.25 text-headline font-bold">
+          <h1
+            style={{ marginTop: vspace(45) }}
+            className="text-headline font-bold"
+          >
             오늘은 이미 일기를 썼어요
           </h1>
           <p className="mt-3.5 text-body-sm font-medium text-muted">
@@ -35,7 +46,7 @@ function AlreadyWritten({ diaryId, onLeave }) {
           보관함에서 보기
         </Button>
       </BottomAction>
-    </>
+    </FixedScreen>
   );
 }
 

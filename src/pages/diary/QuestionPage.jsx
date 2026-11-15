@@ -5,6 +5,7 @@ import BottomAction from "@/components/BottomAction";
 import Button from "@/components/Button";
 import Character from "@/components/Character";
 import ErrorRetry from "@/components/ErrorRetry";
+import FixedScreen from "@/components/layout/FixedScreen";
 import { LoadingDots } from "@/components/LoadingState";
 import ProgressBar from "@/components/ProgressBar";
 import TopBar from "@/components/TopBar";
@@ -18,6 +19,7 @@ import { useDiary } from "@/contexts/diary";
 import useQuestionFlow from "@/hooks/useQuestionFlow";
 import useVoiceRecorder from "@/hooks/useVoiceRecorder";
 import { MOCK_TRANSCRIPTS } from "@/mocks/questions";
+import { vspace } from "@/utils/responsiveSpace";
 import TranscriptConfirm from "@/pages/diary/TranscriptConfirm";
 import QuestionHelp from "@/pages/diary/QuestionHelp";
 import VoiceActions from "@/pages/diary/VoiceActions";
@@ -86,7 +88,7 @@ function VoiceAnswer({
 
   if (draft !== null) {
     return (
-      <>
+      <FixedScreen>
         <TopBar onBack={() => setDraft(null)}>
           <ProgressBar current={order} total={QUESTION_COUNT} />
         </TopBar>
@@ -102,24 +104,27 @@ function VoiceAnswer({
           hint={EMPTY_HINT}
           error={error}
         />
-      </>
+      </FixedScreen>
     );
   }
 
   return (
-    <>
+    <FixedScreen>
       <TopBar>
         <ProgressBar current={order} total={QUESTION_COUNT} />
       </TopBar>
-      <main className="px-5 pt-10.5">
+      <main
+        style={{ paddingTop: vspace(42) }}
+        className="flex flex-1 flex-col overflow-y-auto px-5"
+      >
         <FlowNotice message={notice} />
-        <section className="min-h-142 rounded-dialog border border-border-neutral bg-white pb-6">
+        <section className="flex min-h-0 flex-1 flex-col rounded-dialog border border-border-neutral bg-white pb-6">
           <QuestionHeading
             label={step.label}
             content={question.content}
             type={question.type ?? step.type}
           />
-          <div className="mt-14">
+          <div className="flex min-h-0 flex-1 items-center justify-center">
             <VoiceRecorder recorder={recorder} onToggle={toggle} />
           </div>
         </section>
@@ -129,7 +134,7 @@ function VoiceAnswer({
         onToggle={toggle}
         onSwitchToText={onSwitchToText}
       />
-    </>
+    </FixedScreen>
   );
 }
 
@@ -144,23 +149,22 @@ const TEXT_PLACEHOLDER = {
 function QuestionLoading({ order, inputType }) {
   const step = getQuestionStep(order);
   return (
-    <>
+    <FixedScreen>
       <TopBar>
         <ProgressBar current={order} total={QUESTION_COUNT} />
       </TopBar>
-      <main className="px-5 pt-10.5">
-        <section
-          className={`flex flex-col rounded-dialog border border-border-neutral bg-white ${
-            inputType === INPUT_TYPES.TEXT ? "h-134" : "h-142"
-          }`}
-        >
+      <main
+        style={{ paddingTop: vspace(42) }}
+        className="flex flex-1 flex-col overflow-y-auto px-5"
+      >
+        <section className="flex min-h-0 flex-1 flex-col rounded-dialog border border-border-neutral bg-white">
           <p className="px-5.75 pt-7.75 text-body-sm font-medium text-muted">
             {step?.label}
           </p>
           <div
             role="status"
             aria-live="polite"
-            className="my-auto flex animate-fade-in-delayed flex-col items-center gap-4 py-8 text-center"
+            className="my-auto flex min-h-0 animate-fade-in-delayed flex-col items-center gap-4 py-8 text-center"
           >
             <p className="relative rounded-bubble bg-yellow-light px-5 py-3 text-lead font-bold">
               음… 생각 중이야
@@ -188,7 +192,7 @@ function QuestionLoading({ order, inputType }) {
             : "녹음 시작"}
         </Button>
       </BottomAction>
-    </>
+    </FixedScreen>
   );
 }
 
@@ -199,13 +203,16 @@ function TextAnswer({ question, step, initial, notice, error, onSubmit }) {
   const isLast = order === QUESTION_COUNT;
 
   return (
-    <>
+    <FixedScreen>
       <TopBar>
         <ProgressBar current={order} total={QUESTION_COUNT} />
       </TopBar>
-      <main className="flex flex-col px-5 pt-10.75">
+      <main
+        style={{ paddingTop: vspace(43) }}
+        className="flex flex-1 flex-col overflow-y-auto px-5"
+      >
         <FlowNotice message={notice} />
-        <section className="min-h-51 rounded-dialog border border-border-neutral bg-white pb-5">
+        <section className="rounded-dialog border border-border-neutral bg-white pb-5">
           <QuestionHeading
             label={step.label}
             content={question.content}
@@ -218,7 +225,8 @@ function TextAnswer({ question, step, initial, notice, error, onSubmit }) {
           onChange={(e) => setText(e.target.value)}
           placeholder={TEXT_PLACEHOLDER[order]}
           aria-label="나의 답"
-          className="mt-8 h-75 w-full resize-none rounded-bubble border border-border-neutral bg-white p-5 text-[20px] leading-[1.2] font-medium text-ink outline-none placeholder:text-muted focus:border-yellow"
+          style={{ marginTop: vspace(32) }}
+          className="min-h-24 w-full flex-1 resize-none rounded-bubble border border-border-neutral bg-white p-5 text-[20px] leading-[1.2] font-medium text-ink outline-none placeholder:text-muted focus:border-yellow"
         />
         <p className="mt-3 text-body-sm font-medium text-muted">{EMPTY_HINT}</p>
       </main>
@@ -228,24 +236,27 @@ function TextAnswer({ question, step, initial, notice, error, onSubmit }) {
           {isLast ? "완료하기" : "다음으로"}
         </Button>
       </BottomAction>
-    </>
+    </FixedScreen>
   );
 }
 
 // 첫 질문을 받지 못함 — 다시 시도
 function QuestionStartError({ onRetry }) {
   return (
-    <>
+    <FixedScreen>
       <TopBar>
         <ProgressBar current={1} total={QUESTION_COUNT} />
       </TopBar>
-      <main className="px-5 pt-10.5">
+      <main
+        style={{ paddingTop: vspace(42) }}
+        className="flex-1 overflow-y-auto px-5"
+      >
         <ErrorRetry
           message={"질문을 불러오지 못했어요.\n다시 시도해 주세요."}
           onRetry={onRetry}
         />
       </main>
-    </>
+    </FixedScreen>
   );
 }
 

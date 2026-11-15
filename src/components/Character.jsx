@@ -7,17 +7,32 @@ import wave from "@/assets/characters/wave.webp";
 
 const CHARACTERS = { note, sit, smile, wave };
 
+// Figma 전체 높이(402×874) 비율로 줄어들고, 작은 화면에서도 원래 크기의 55% 밑으로는 줄지 않는다.
+// 402×874에서는 지정한 size·height와 동일하게 보인다.
+const FIGMA_HEIGHT = 874;
+const MIN_RATIO = 0.55;
+
 // 캐릭터 이미지 (기본 230×230, note는 230×255)
-function Character({ name, size = 230, height, className = "" }) {
+function Character({ name, size = 230, height, className = "", style = {} }) {
   const h = height ?? size;
+  const w = size;
+  const percent = +((h / FIGMA_HEIGHT) * 100).toFixed(3);
+  const ratio = +(w / h).toFixed(4);
+  const minH = Math.round(h * MIN_RATIO);
+  const minW = Math.round(w * MIN_RATIO);
+
   return (
     <img
       src={CHARACTERS[name]}
       alt=""
-      width={size}
+      width={w}
       height={h}
       className={`pointer-events-none mx-auto shrink-0 object-contain ${className}`}
-      style={{ width: size, height: h }}
+      style={{
+        ...style,
+        height: `clamp(${minH}px, ${percent}dvh, ${h}px)`,
+        width: `clamp(${minW}px, calc(${percent}dvh * ${ratio}), ${w}px)`,
+      }}
     />
   );
 }

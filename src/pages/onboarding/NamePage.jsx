@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import TextField from "@/components/TextField";
 import { useOnboarding } from "@/contexts/onboarding";
 import OnboardingStep from "@/pages/onboarding/OnboardingStep";
+import { vspace } from "@/utils/responsiveSpace";
 
 // A06 이름 입력 (진행 2/3)
 function NamePage() {
@@ -21,7 +22,7 @@ function NamePage() {
       }}
     >
       <TextField
-        className="mt-16.25"
+        style={{ marginTop: vspace(65) }}
         placeholder="이름을 입력해 주세요"
         value={name}
         maxLength={20}

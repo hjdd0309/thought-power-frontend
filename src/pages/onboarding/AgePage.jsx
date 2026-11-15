@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AGE_MAX, AGE_MIN } from "@/constants/onboarding";
 import { useOnboarding } from "@/contexts/onboarding";
 import OnboardingStep from "@/pages/onboarding/OnboardingStep";
+import { vspace } from "@/utils/responsiveSpace";
 
 // Figma 나이 선택 슬라이더: 트랙 308px(좌 27px), 핸들 28px
 // 핸들 중심이 트랙 양 끝(6세·10세)까지 가도록 input은 트랙보다 핸들 크기만큼 넓게 둔다
@@ -35,7 +36,10 @@ function AgePage() {
         navigate("/onboarding/done");
       }}
     >
-      <div className="relative mt-12 h-41.5">
+      <div
+        style={{ marginTop: vspace(48) }}
+        className="relative h-41.5"
+      >
         <p className="text-center text-[27.5px] leading-[1.2] font-bold">
           {shown}세
         </p>
