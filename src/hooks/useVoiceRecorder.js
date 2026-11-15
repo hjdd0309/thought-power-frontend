@@ -98,34 +98,11 @@ let activeRecognition = null;
 function killRecognition(recognition) {
   if (!recognition) return;
   try {
-    // iOS 공용 인스턴스는 abort하면 다음 세션이 소리를 못 받는 경우가 있어 stop만 쓴다
-    if (recognition === iosRecognition) recognition.stop();
-    else recognition.abort();
+    recognition.abort();
   } catch {
     /* 이미 종료됨 */
   }
   if (activeRecognition === recognition) activeRecognition = null;
-}
-
-/**
- * iOS Safari: 녹음마다 새 인식 객체를 만들면 두 번째부터 소리를 못 받는 버그가 있어
- * 페이지 전체에서 인식 객체 하나를 만들어 계속 재사용한다.
- */
-let iosRecognition = null;
-let iosRunning = false;
-
-function getIOSRecognition(Recognition) {
-  if (!iosRecognition) {
-    iosRecognition = new Recognition();
-    // 화면마다 on* 핸들러를 갈아 끼우므로, 실행 상태는 별도 리스너로 추적
-    iosRecognition.addEventListener("start", () => {
-      iosRunning = true;
-    });
-    iosRecognition.addEventListener("end", () => {
-      iosRunning = false;
-    });
-  }
-  return iosRecognition;
 }
 
 const VOICE_HOLD_MS = 700; // 소리 감지 후 파형을 크게 유지하는 시간(모바일 가짜 파형)
@@ -240,13 +217,10 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
   // continuous=true(데스크톱·iOS): iOS는 터치 없이 재시작하면 권한 오류가 나서 한 세션으로 유지
   const startRecognition = (Recognition, { continuous = true } = {}) => {
     const s = r.current;
-    // iOS Safari는 이전 인식이 완전히 끝나지 않으면 새 인식이 마이크를 못 받는다
-    // → 화면(훅 인스턴스)과 관계없이 남아 있는 인식을 먼저 확실히 끊는다
-    const ios = isIOSDevice();
-    if (!ios) killRecognition(activeRecognition);
-    const recognition = ios
-      ? getIOSRecognition(Recognition)
-      : new Recognition();
+    // 남아 있는 이전 인식이 있으면 먼저 확실히 끊고, 버튼 터치 흐름 안에서 항상 새로 만들어 바로 시작한다
+    // (iOS Safari는 터치 맥락 밖에서 start()하면 인식이 시작되지 않으므로 지연 없이 동기적으로 start해야 한다)
+    killRecognition(activeRecognition);
+    const recognition = new Recognition();
     activeRecognition = recognition;
     // 정지·중단된 이전 인스턴스의 늦은 이벤트가 새 녹음 텍스트를 건드리지 않게 무시
     const stale = () => s.recognition !== recognition;
@@ -275,7 +249,7 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     };
 
     recognition.onresult = (event) => {
-      if (stale() || s.waitingPrevEnd) return;
+      if (stale()) return;
       markVoice();
       s.gotResult = true;
       let finalText = "";
@@ -330,8 +304,6 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
         activeRecognition = null;
       }
       if (stale()) return;
-      // 이전 세션의 종료 이벤트 → 새 세션 시작은 startAfterEnd가 맡는다
-      if (s.waitingPrevEnd) return;
       // iOS Safari는 isFinal을 주지 않고 끝내는 경우가 많다 → 인식 중 텍스트도 확정으로 취급
       const piece = `${s.sessionFinal}${s.interim}`.trim();
       if (piece) s.committed = s.committed ? `${s.committed} ${piece}` : piece;
@@ -351,33 +323,7 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     };
 
     s.restarting = false;
-    s.waitingPrevEnd = false;
     s.recognition = recognition;
-
-    // iOS 공용 인스턴스가 아직 이전 세션을 끝내는 중이면, 끝난 직후 시작한다
-    if (ios && iosRunning) {
-      voiceLog("ios: previous session still running → wait end");
-      s.waitingPrevEnd = true;
-      const startAfterEnd = () => {
-        recognition.removeEventListener("end", startAfterEnd);
-        s.waitingPrevEnd = false;
-        clearTimeout(fallback);
-        if (stale() || !s.recording) return;
-        try {
-          recognition.start();
-        } catch (e) {
-          voiceLog("delayed start failed", e?.name || "", e?.message || "");
-        }
-      };
-      const fallback = setTimeout(startAfterEnd, 1000);
-      recognition.addEventListener("end", startAfterEnd);
-      try {
-        recognition.stop();
-      } catch {
-        /* 이미 종료됨 */
-      }
-      return;
-    }
     recognition.start();
   };
 
