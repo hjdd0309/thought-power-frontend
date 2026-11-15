@@ -1,12 +1,37 @@
 import client from "@/api/client";
 import { USE_MOCK, mockResponse } from "@/api/mock";
 import { EMOTIONS } from "@/constants/emotions";
+import {
+  DEMO_SEED_ENABLED,
+  findSeedDiary,
+  getSeedDiaries,
+  hideSeedDiary,
+  isSeedId,
+} from "@/mocks/demoSeed";
 import { mockDiaries, removeMockDiary } from "@/mocks/diaries";
 import { buildReportText } from "@/mocks/report";
 import { parseISODate, toISODate } from "@/utils/date";
 
 // 보관함·리포트(E) API — USE_MOCK=false면 실서버, true면 src/mocks
 // 응답 필드는 여기서 화면 형식으로 바꿔 화면 컴포넌트는 그대로 쓴다
+
+// 시연용 시드(VITE_DEMO_SEED=true, 실서버 모드 전용) — src/mocks/demoSeed.js
+// 실서버 응답을 받은 "뒤" 화면용 데이터에만 합친다. 서버 요청·에러 처리는 그대로 둔다.
+// 시드 코드가 실패하면 실서버 데이터만 돌려준다.
+const SEED_ON = DEMO_SEED_ENABLED && !USE_MOCK;
+
+function withSeed(serverData, merge) {
+  if (!SEED_ON) return serverData;
+  try {
+    return merge(serverData);
+  } catch (e) {
+    console.warn("[demoSeed] 시드 병합 실패 — 실서버 데이터만 표시", e);
+    return serverData;
+  }
+}
+
+const byDateThenId = (a, b) =>
+  a.date.localeCompare(b.date) || (a.diaryId ?? 0) - (b.diaryId ?? 0);
 
 /**
  * 보관함 달력 — 해당 월에 일기가 있는 날짜 [{ diaryId?, date, emotion }]
@@ -18,9 +43,18 @@ export async function getMonthlyDiaries(year, month) {
     const { data } = await client.get("/api/diaries/calendar", {
       params: { year, month },
     });
-    return (data?.days ?? [])
+    const list = (data?.days ?? [])
       .filter((d) => d.diaryCount > 0 || d.emotions?.length)
       .map((d) => ({ date: d.date, emotion: d.emotions?.[0] ?? null }));
+    // 실서버 일기가 있는 날짜는 실서버 우선, 시드는 diaryId(음수)를 함께 넘겨 바로 상세로 간다
+    return withSeed(list, (real) => {
+      const prefix = `${year}-${String(month).padStart(2, "0")}-`;
+      const realDates = new Set(real.map((d) => d.date));
+      const seeds = getSeedDiaries()
+        .filter((s) => s.date.startsWith(prefix) && !realDates.has(s.date))
+        .map(({ diaryId, date, emotion }) => ({ diaryId, date, emotion }));
+      return seeds.length ? [...real, ...seeds].sort(byDateThenId) : real;
+    });
   }
   const prefix = `${year}-${String(month).padStart(2, "0")}-`;
   const list = mockDiaries
@@ -34,6 +68,23 @@ export async function getMonthlyDiaries(year, month) {
  * 실서버 GET /api/diaries?date=YYYY-MM-DD → { diaries: [...] }
  */
 export async function getDiariesByDate(date) {
+  const list = await fetchDiariesByDate(date);
+  // 실서버에 그 날짜 일기가 있으면 실서버 그대로, 없을 때만 시드
+  return withSeed(list, (real) => {
+    if (real.length) return real;
+    return getSeedDiaries()
+      .filter((s) => s.date === date)
+      .map(({ diaryId, date: day, emotion, content }) => ({
+        diaryId,
+        date: day,
+        emotion,
+        contentPreview: content,
+      }));
+  });
+}
+
+// 날짜별 조회 원본 (시드 없음)
+async function fetchDiariesByDate(date) {
   if (!USE_MOCK) {
     const { data } = await client.get("/api/diaries", { params: { date } });
     return data?.diaries ?? [];
@@ -49,9 +100,9 @@ export async function getDiariesByDate(date) {
   return mockResponse(list);
 }
 
-/** 오늘 쓴 일기 { diaryId, date, emotion } 또는 null — 날짜별 조회로 확인 (하루 1개 제한 확인용) */
+/** 오늘 쓴 일기 { diaryId, date, emotion } 또는 null — 날짜별 조회로 확인 (하루 1개 제한 확인용, 시드 제외) */
 export async function getTodayDiary() {
-  const list = await getDiariesByDate(toISODate());
+  const list = await fetchDiariesByDate(toISODate());
   return list[0] ?? null;
 }
 
@@ -60,6 +111,15 @@ export async function getTodayDiary() {
  * 실서버 GET /api/diaries/{diaryId}: 질문 문장이 question 필드로 와서 content로 바꾼다. 404면 null
  */
 export async function getDiary(diaryId) {
+  // 시드(음수 id)는 서버에 요청하지 않고 고정 데이터로 보여준다
+  if (SEED_ON && isSeedId(diaryId)) {
+    try {
+      const seed = findSeedDiary(diaryId);
+      return seed && structuredClone(seed);
+    } catch {
+      return null;
+    }
+  }
   if (!USE_MOCK) {
     try {
       const { data } = await client.get(
@@ -87,6 +147,11 @@ export async function getDiary(diaryId) {
 
 /** 일기 삭제 — 실서버 DELETE /api/diaries/{diaryId} (200) */
 export async function deleteDiary(diaryId) {
+  // 시드(음수 id)는 서버에 요청하지 않고 화면에서만 숨긴다 (새로고침하면 다시 보임)
+  if (SEED_ON && isSeedId(diaryId)) {
+    hideSeedDiary(diaryId);
+    return { diaryId, deleted: true };
+  }
   if (!USE_MOCK) {
     await client.delete(`/api/diaries/${encodeURIComponent(diaryId)}`);
     return { diaryId, deleted: true };
@@ -140,12 +205,41 @@ export async function getEmotionReport(startDate, endDate) {
     const { data } = await client.get("/api/reports/emotions", {
       params: { startDate, endDate },
     });
-    return mapReportResponse(data);
+    // 기간에 보여줄 시드가 있으면 실서버 일기(days) + 시드로 프론트에서 다시 집계, 없으면 실서버 응답 그대로
+    return withSeed(mapReportResponse(data), (serverReport) => {
+      const real = (data?.days ?? []).flatMap(({ date, diaries }) =>
+        (diaries ?? []).map(({ diaryId, emotion }) => ({
+          diaryId,
+          date,
+          emotion,
+        })),
+      );
+      const realDates = new Set(real.map((d) => d.date));
+      const seeds = getSeedDiaries().filter(
+        (s) =>
+          s.date >= startDate && s.date <= endDate && !realDates.has(s.date),
+      );
+      if (!seeds.length) return serverReport;
+      return mapReportResponse(
+        buildReport(startDate, endDate, [...real, ...seeds]),
+      );
+    });
   }
 
-  const inRange = mockDiaries
-    .filter((d) => d.date >= startDate && d.date <= endDate)
-    .sort((a, b) => a.date.localeCompare(b.date) || a.diaryId - b.diaryId);
+  const inRange = mockDiaries.filter(
+    (d) => d.date >= startDate && d.date <= endDate,
+  );
+  return mockResponse(
+    mapReportResponse(buildReport(startDate, endDate, inRange)),
+  );
+}
+
+/**
+ * 일기 목록 [{ diaryId, date, emotion }] → 리포트 원시 응답 형식(실서버와 같은 필드)
+ * 문구는 buildReportText로 집계 결과에서 만든다 (mock · 시드 병합 공용)
+ */
+function buildReport(startDate, endDate, diaries) {
+  const inRange = [...diaries].sort(byDateThenId);
   const total = inRange.length;
 
   const distribution = EMOTIONS.map(({ code }) => {
@@ -187,14 +281,14 @@ export async function getEmotionReport(startDate, endDate) {
     EMOTIONS.map(({ code, label }) => [code, label]),
   );
 
-  const raw = {
+  return {
     startDate,
     endDate,
     totalDiaryCount: total,
     distribution,
     mostFrequentEmotions,
     leastFrequentEmotions,
-    // mock: AI 문구를 집계 결과로 만든다 (실서버에서는 BE2가 AI 응답을 합쳐서 반환)
+    // 문구는 집계 결과로 만든다 (실서버만 쓸 때는 BE2가 AI 응답을 합쳐서 반환)
     ...buildReportText(
       distribution,
       mostFrequentEmotions,
@@ -204,6 +298,4 @@ export async function getEmotionReport(startDate, endDate) {
     days,
     legend,
   };
-
-  return mockResponse(mapReportResponse(raw));
 }
