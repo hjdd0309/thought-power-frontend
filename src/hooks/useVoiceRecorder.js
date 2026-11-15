@@ -42,6 +42,47 @@ function isMobileDevice() {
   return /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
 }
 
+/** iPhone·iPad (iOS는 Chrome도 Safari 엔진을 쓴다) */
+function isIOSDevice() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return (
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  );
+}
+
+/**
+ * 기기 진단용 로그 — 주소 뒤에 ?voicedebug 를 붙여 한 번 열면 그 탭에서 계속 켜진다.
+ * 화면 위쪽에 음성 인식 이벤트를 띄운다. (원인 확인 후 제거 예정)
+ */
+function voiceLog(...args) {
+  if (typeof window === "undefined") return;
+  try {
+    if (new URLSearchParams(window.location.search).has("voicedebug")) {
+      sessionStorage.setItem("voicedebug", "1");
+    }
+    if (sessionStorage.getItem("voicedebug") !== "1") return;
+  } catch {
+    return;
+  }
+  let el = document.getElementById("voice-debug");
+  if (!el) {
+    el = document.createElement("pre");
+    el.id = "voice-debug";
+    el.style.cssText =
+      "position:fixed;top:0;left:0;right:0;max-height:35vh;overflow:auto;z-index:99999;" +
+      "margin:0;padding:6px;font:11px/1.35 monospace;white-space:pre-wrap;word-break:break-all;" +
+      "background:rgba(0,0,0,.8);color:#0f0;";
+    document.body.appendChild(el);
+  }
+  const time = new Date().toTimeString().slice(0, 8);
+  el.textContent = `${time} ${args.join(" ")}\n${el.textContent}`.slice(
+    0,
+    4000,
+  );
+}
+
 const VOICE_HOLD_MS = 700; // 소리 감지 후 파형을 크게 유지하는 시간(모바일 가짜 파형)
 
 /** 이 환경에서 말로 쓰기를 쓸 수 없는 이유 (쓸 수 있으면 null) */
@@ -134,28 +175,57 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
   // 화면을 벗어나면 마이크를 반드시 끈다
   useEffect(() => abortAll, [abortAll]);
 
+  useEffect(() => {
+    voiceLog(
+      "env",
+      `secure=${window.isSecureContext}`,
+      `SR=${Boolean(window.SpeechRecognition)}`,
+      `webkitSR=${Boolean(window.webkitSpeechRecognition)}`,
+      `unavailable=${getVoiceUnavailableReason()}`,
+      navigator.userAgent,
+    );
+  }, []);
+
   const fullText = () => {
     const s = r.current;
-    return `${s.committed}${s.sessionFinal}${s.interim}`.trim();
+    return [s.committed, `${s.sessionFinal}${s.interim}`.trim()]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
   };
 
-  // 모바일은 continuous 모드에서 결과가 중복·누락되는 버그가 있어
-  // 한 문장씩 인식하고 onend에서 다시 시작한다
+  // continuous=false(Android): 한 문장씩 인식하고 onend에서 다시 시작한다
+  // continuous=true(데스크톱·iOS): iOS는 터치 없이 재시작하면 권한 오류가 나서 한 세션으로 유지
   const startRecognition = (Recognition, { continuous = true } = {}) => {
     const s = r.current;
     const recognition = new Recognition();
     recognition.lang = "ko-KR";
     recognition.continuous = continuous;
     recognition.interimResults = true;
+    s.gotResult = false;
+    voiceLog(
+      "start",
+      `continuous=${continuous}`,
+      `mobile=${isMobileDevice()}`,
+      navigator.userAgent,
+    );
 
     const markVoice = () => {
       s.lastVoiceAt = performance.now();
     };
-    recognition.onsoundstart = markVoice;
-    recognition.onspeechstart = markVoice;
+    recognition.onaudiostart = () => voiceLog("audiostart");
+    recognition.onsoundstart = () => {
+      voiceLog("soundstart");
+      markVoice();
+    };
+    recognition.onspeechstart = () => {
+      voiceLog("speechstart");
+      markVoice();
+    };
 
     recognition.onresult = (event) => {
       markVoice();
+      s.gotResult = true;
       let finalText = "";
       let interimText = "";
       for (let i = 0; i < event.results.length; i++) {
@@ -163,13 +233,17 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
         if (event.results[i].isFinal) finalText += text;
         else interimText += text;
       }
+      voiceLog("result", `final="${finalText}"`, `interim="${interimText}"`);
       s.sessionFinal = finalText;
       s.interim = interimText;
       setTranscript(fullText());
     };
 
     recognition.onerror = (event) => {
+      voiceLog("error", event.error, event.message || "");
       if (event.error === "no-speech" || event.error === "aborted") return;
+      // 자동 재시작 중 오류는 이미 받은 텍스트를 지키기 위해 무시하고, 정지 버튼에서 마무리
+      if (s.restarting && fullText()) return;
       s.recording = false;
       if (
         event.error === "not-allowed" ||
@@ -188,22 +262,31 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     };
 
     // Chrome은 침묵이 길면 세션을 끝낸다 → 녹음 중이면 이어서 다시 시작
+    recognition.onstart = () => {
+      voiceLog("onstart");
+    };
+
     recognition.onend = () => {
-      const piece = s.sessionFinal.trim();
+      voiceLog("end", `recording=${s.recording}`);
+      // iOS Safari는 isFinal을 주지 않고 끝내는 경우가 많다 → 인식 중 텍스트도 확정으로 취급
+      const piece = `${s.sessionFinal}${s.interim}`.trim();
       if (piece) s.committed = s.committed ? `${s.committed} ${piece}` : piece;
       s.sessionFinal = "";
+      s.interim = "";
+      setTranscript(fullText());
       if (s.recording) {
-        s.interim = "";
+        s.restarting = true;
         try {
           recognition.start();
-        } catch {
-          /* 재시작 실패 시 정지 처리에서 마무리 */
+        } catch (e) {
+          voiceLog("restart failed", e?.name || "", e?.message || "");
         }
         return;
       }
       s.onRecognitionEnd?.();
     };
 
+    s.restarting = false;
     s.recognition = recognition;
     recognition.start();
   };
@@ -279,8 +362,11 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
       s.recording = true;
       s.lastVoiceAt = 0;
       try {
-        startRecognition(getRecognitionClass(), { continuous: false });
-      } catch {
+        startRecognition(getRecognitionClass(), {
+          continuous: isIOSDevice(),
+        });
+      } catch (e) {
+        voiceLog("start failed", e?.name || "", e?.message || "");
         abortAll();
         setError("failed");
         setStatus("idle");
@@ -375,6 +461,7 @@ export default function useVoiceRecorder({ mockTranscript = "" } = {}) {
     releaseDevices();
 
     let text = fullText();
+    voiceLog("stop", `text="${text}"`, `gotResult=${s.gotResult}`);
     if (!text && USE_MOCK) text = mockTranscript;
     setStatus("idle");
     if (!text) setError("empty");
